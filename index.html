@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>126Verse Content Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; }
+        .app-container { max-width: 480px; margin: 0 auto; min-height: 100vh; background: white; box-shadow: 0 0 15px rgba(0,0,0,0.05); }
+        .header-bg { background: linear-gradient(135deg, #0a66c2 0%, #004182 100%); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .card-shadow { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .status-badge { font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 4px 8px; rounded: 6px; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .fa-spin-fast { animation: fa-spin 1s infinite linear; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="app-container relative flex flex-col">
+        <header class="header-bg px-5 py-6 sticky top-0 z-30 shadow-md text-white">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h1 class="font-bold text-2xl tracking-tight">126Verse Hub</h1>
+                    <p class="text-blue-200 text-xs opacity-90" id="currentDate">...</p>
+                </div>
+                <button onclick="loadData()" class="bg-white/10 p-2.5 rounded-full backdrop-blur-sm border border-white/20 active:scale-90 transition-transform">
+                    <i id="reloadIcon" class="fa-solid fa-cloud-arrow-down text-white text-lg"></i>
+                </button>
+            </div>
+            <div class="flex bg-black/20 p-1 rounded-xl backdrop-blur-md">
+                <button onclick="switchTab('todo')" id="tab-todo" class="flex-1 py-2 text-sm font-bold rounded-lg bg-white text-blue-900 shadow-sm transition-all">Việc cần làm</button>
+                <button onclick="switchTab('all')" id="tab-all" class="flex-1 py-2 text-sm font-bold rounded-lg text-blue-100 hover:bg-white/10 transition-all">Tất cả</button>
+            </div>
+        </header>
+
+        <div id="postList" class="p-4 space-y-3 pb-24 bg-gray-50 flex-1 overflow-y-auto min-h-[60vh]">
+            <div class="flex flex-col items-center justify-center pt-20 text-gray-400 space-y-3">
+                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-500"></i>
+                <p class="text-sm">Đang tải dữ liệu...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="postModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+        <div class="absolute bottom-0 w-full bg-white rounded-t-3xl p-6 flex flex-col max-h-[85vh] animate-[slideUp_0.3s_ease-out]">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+            <div class="flex-1 overflow-y-auto hide-scrollbar pb-4">
+                <div class="flex items-center justify-between mb-3">
+                    <span id="modalCategory" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 uppercase tracking-wide">...</span>
+                    <span id="modalDate" class="text-xs font-semibold text-gray-400">...</span>
+                </div>
+                <h2 id="modalTopic" class="text-xl font-bold text-gray-900 leading-snug mb-5">...</h2>
+                <div class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative group">
+                    <button onclick="copyContent()" class="absolute top-2 right-2 bg-white p-2 rounded-lg shadow-sm border border-gray-100 text-gray-400 hover:text-blue-600 active:scale-95 transition-all z-10">
+                        <i class="fa-regular fa-copy text-lg"></i>
+                    </button>
+                    <p id="modalContent" class="text-gray-700 whitespace-pre-line text-sm leading-relaxed font-sans pr-2">...</p>
+                </div>
+                <a id="modalImageLink" href="#" target="_blank" class="hidden mt-4 block relative rounded-xl overflow-hidden shadow-sm group border border-gray-200">
+                    <div class="flex items-center p-3 bg-white">
+                        <div class="bg-blue-100 p-2.5 rounded-lg mr-3 text-blue-600"><i class="fa-solid fa-image text-lg"></i></div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-700">Hình ảnh đính kèm</p>
+                            <p class="text-[10px] text-gray-400">Bấm để xem và tải về</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="pt-3 mt-2 border-t border-gray-100">
+                <button id="btnMarkDone" onclick="markAsDone()" class="w-full bg-[#0a66c2] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-200 active:scale-[0.98] transition-all flex justify-center items-center text-base">
+                    Xác nhận ĐÃ ĐĂNG
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // LINK CỦA BẠN (Dùng Proxy để đảm bảo 100% chạy được trên mọi môi trường)
+        const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTyEz9LDsK7hpJX5y1GhJqDHbIGrDlHXIk7UToKjOx-zYxBO34RuwhEd-MJNNPlXTsqn5vssq_yjSsz/pub?gid=0&single=true&output=csv";
+        const PROXY_URL = "https://corsproxy.io/?" + encodeURIComponent(SHEET_URL);
+
+        let POSTS_DATA = [];
+        let currentTab = 'todo';
+        let selectedId = null;
+        let doneList = JSON.parse(localStorage.getItem('126Verse_DoneList')) || [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            document.getElementById('currentDate').innerText = now.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' });
+            loadData();
+        });
+
+        function loadData() {
+            const icon = document.getElementById('reloadIcon');
+            icon.classList.add('fa-spin');
+            
+            // Thêm timestamp để ép tải mới
+            Papa.parse(PROXY_URL + "&t=" + Date.now(), {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    icon.classList.remove('fa-spin');
+                    if (results.data && results.data.length > 0) {
+                        POSTS_DATA = results.data
+                            .filter(row => row.id && row.topic)
+                            .map(row => ({
+                                id: row.id.toString().trim(),
+                                date: row.date ? row.date.trim() : "", 
+                                category: row.category ? row.category.trim() : "General",
+                                topic: row.topic ? row.topic.trim() : "No Title",
+                                content: row.content ? row.content.trim() : "",
+                                image_url: row.image_url ? row.image_url.trim() : ""
+                            }));
+                        renderList();
+                        
+                        // Toast báo thành công
+                        const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 1500 });
+                        Toast.fire({ icon: 'success', title: 'Đã cập nhật dữ liệu!' });
+                    } else {
+                        showError("Sheet trống hoặc sai tên cột. Vui lòng kiểm tra lại.");
+                    }
+                },
+                error: function(err) {
+                    icon.classList.remove('fa-spin');
+                    showError("Lỗi kết nối. Hãy đảm bảo bạn đang chạy trên GitHub Pages.");
+                }
+            });
+        }
+
+        function renderList() {
+            const container = document.getElementById('postList');
+            container.innerHTML = '';
+            
+            let validPosts = POSTS_DATA.filter(p => p.date);
+            validPosts.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            let displayPosts = [];
+            if (currentTab === 'todo') {
+                displayPosts = validPosts.filter(p => !doneList.includes(p.id));
+            } else {
+                displayPosts = validPosts;
+            }
+
+            if (displayPosts.length === 0) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-16 opacity-50 text-center">
+                        <i class="fa-solid fa-clipboard-check text-4xl mb-4 text-gray-300"></i>
+                        <p class="font-medium text-gray-500">Không có bài viết nào!</p>
+                    </div>`;
+                return;
+            }
+
+            displayPosts.forEach(post => {
+                const isDone = doneList.includes(post.id);
+                let dateStr = "N/A";
+                try {
+                    const d = new Date(post.date);
+                    if(!isNaN(d)) dateStr = d.toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit'});
+                    else dateStr = post.date;
+                } catch(e) {}
+
+                const statusHTML = isDone 
+                    ? `<span class="status-badge bg-green-100 text-green-700 flex items-center"><i class="fa-solid fa-check mr-1 text-[8px]"></i> ĐÃ ĐĂNG</span>` 
+                    : `<span class="status-badge bg-yellow-100 text-yellow-800">CHƯA ĐĂNG</span>`;
+                const opacityClass = isDone ? 'opacity-60 grayscale' : 'opacity-100';
+
+                const html = `
+                <div onclick="openModal('${post.id}')" class="bg-white p-4 rounded-2xl card-shadow mb-3 active:scale-[0.98] transition-transform cursor-pointer border border-gray-100 ${opacityClass}">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-md min-w-[50px] text-center">${dateStr}</span>
+                            <span class="text-[10px] font-bold uppercase text-blue-600 tracking-wide line-clamp-1 bg-blue-50 px-2 py-1 rounded">${post.category}</span>
+                        </div>
+                        ${statusHTML}
+                    </div>
+                    <h3 class="font-bold text-gray-800 leading-snug line-clamp-2">${post.topic}</h3>
+                </div>`;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function openModal(id) {
+            selectedId = id;
+            const post = POSTS_DATA.find(p => p.id == id);
+            const isDone = doneList.includes(post.id);
+
+            document.getElementById('modalCategory').innerText = post.category;
+            try { document.getElementById('modalDate').innerText = new Date(post.date).toLocaleDateString('vi-VN'); } catch(e) { document.getElementById('modalDate').innerText = post.date; }
+            document.getElementById('modalTopic').innerText = post.topic;
+            document.getElementById('modalContent').innerText = post.content;
+            
+            const imgLink = document.getElementById('modalImageLink');
+            if (post.image_url && post.image_url.length > 5) {
+                imgLink.classList.remove('hidden');
+                imgLink.href = post.image_url;
+            } else {
+                imgLink.classList.add('hidden');
+            }
+
+            const btn = document.getElementById('btnMarkDone');
+            if (isDone) {
+                btn.innerText = "Đã đăng bài này rồi";
+                btn.className = "w-full bg-gray-200 text-gray-500 font-bold py-3.5 rounded-xl cursor-not-allowed";
+                btn.disabled = true;
+            } else {
+                btn.innerHTML = `<i class="fa-solid fa-check-circle mr-2"></i> Xác nhận ĐÃ ĐĂNG`;
+                btn.className = "w-full bg-[#0a66c2] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-200 active:scale-[0.98] transition-all flex justify-center items-center text-base";
+                btn.disabled = false;
+            }
+            document.getElementById('postModal').classList.remove('hidden');
+        }
+        function closeModal() { document.getElementById('postModal').classList.add('hidden'); }
+        function switchTab(tab) {
+            currentTab = tab;
+            const active = "flex-1 py-2 text-sm font-bold rounded-lg bg-white text-blue-900 shadow-sm transition-all";
+            const inactive = "flex-1 py-2 text-sm font-bold rounded-lg text-blue-100 hover:bg-white/10 transition-all";
+            document.getElementById('tab-todo').className = tab === 'todo' ? active : inactive;
+            document.getElementById('tab-all').className = tab === 'all' ? active : inactive;
+            renderList();
+        }
+        function copyContent() {
+            navigator.clipboard.writeText(document.getElementById('modalContent').innerText).then(() => {
+                const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 1500 });
+                Toast.fire({ icon: 'success', title: 'Đã copy!' });
+            });
+        }
+        function markAsDone() {
+            if (!selectedId) return;
+            if (!doneList.includes(selectedId)) {
+                doneList.push(selectedId);
+                localStorage.setItem('126Verse_DoneList', JSON.stringify(doneList));
+            }
+            Swal.fire({ icon: 'success', title: 'Đã hoàn thành!', timer: 1000, showConfirmButton: false });
+            closeModal();
+            renderList();
+        }
+        function showError(msg) {
+            document.getElementById('postList').innerHTML = `<div class="text-center p-6 text-red-500 bg-red-50 rounded-2xl border border-red-100 mx-2"><i class="fa-solid fa-circle-exclamation text-3xl mb-3"></i><p class="font-bold text-sm">${msg}</p></div>`;
+        }
+    </script>
+</body>
+</html>
