@@ -3,44 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>126Verse Content Hub</title>
+    <title>Content Manager V2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; }
         .app-container { max-width: 480px; margin: 0 auto; min-height: 100vh; background: white; box-shadow: 0 0 15px rgba(0,0,0,0.05); }
-        .header-bg { background: linear-gradient(135deg, #0a66c2 0%, #004182 100%); }
+        /* Gradient động cho Header */
+        .bg-felix { background: linear-gradient(135deg, #0a66c2 0%, #004182 100%); } /* Xanh LinkedIn */
+        .bg-126v { background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); } /* Tím Neon (Brand 126V) */
+        
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .card-shadow { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
         .status-badge { font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 4px 8px; rounded: 6px; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        #modalImagePreview { transition: transform 0.3s ease; }
+        #modalImagePreview:active { transform: scale(0.98); }
+        
+        /* Hiệu ứng chuyển đổi Account */
+        .account-switcher { transition: all 0.3s ease; }
+        .account-active { background: rgba(255,255,255,0.2); font-weight: bold; border: 1px solid rgba(255,255,255,0.4); }
+        .account-inactive { opacity: 0.6; }
     </style>
 </head>
 <body class="bg-gray-100">
 
     <div class="app-container relative flex flex-col">
-        <header class="header-bg px-5 py-6 sticky top-0 z-30 shadow-md text-white">
-            <div class="flex justify-between items-center mb-4">
-                <div>
-                    <h1 class="font-bold text-2xl tracking-tight">126Verse Hub</h1>
-                    <p class="text-blue-200 text-xs opacity-90" id="currentDate">...</p>
-                </div>
-                <button onclick="loadData()" class="bg-white/10 p-2.5 rounded-full backdrop-blur-sm border border-white/20 active:scale-90 transition-transform">
-                    <i id="reloadIcon" class="fa-solid fa-cloud-arrow-down text-white text-lg"></i>
+        <header id="mainHeader" class="bg-felix px-5 pt-6 pb-4 sticky top-0 z-30 shadow-md text-white transition-colors duration-500">
+            
+            <div class="flex justify-center mb-4 bg-black/20 p-1 rounded-2xl backdrop-blur-md mx-4">
+                <button onclick="switchAccount('felix')" id="btn-acc-felix" class="account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 account-active">
+                    <i class="fa-solid fa-user-tie"></i> Felix Phan
+                </button>
+                <button onclick="switchAccount('126v')" id="btn-acc-126v" class="account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 account-inactive">
+                    <i class="fa-solid fa-building"></i> 126Verse
                 </button>
             </div>
-            <div class="flex bg-black/20 p-1 rounded-xl backdrop-blur-md">
-                <button onclick="switchTab('todo')" id="tab-todo" class="flex-1 py-2 text-sm font-bold rounded-lg bg-white text-blue-900 shadow-sm transition-all">Việc cần làm</button>
-                <button onclick="switchTab('all')" id="tab-all" class="flex-1 py-2 text-sm font-bold rounded-lg text-blue-100 hover:bg-white/10 transition-all">Tất cả</button>
+
+            <div class="flex justify-between items-center mb-3 px-1">
+                <div>
+                    <h1 class="font-bold text-xl tracking-tight" id="headerTitle">Personal Brand</h1>
+                    <p class="text-blue-100 text-xs opacity-90" id="currentDate">...</p>
+                </div>
+                <button onclick="loadData()" class="bg-white/10 p-2 rounded-full backdrop-blur-sm border border-white/20 active:scale-90 transition-transform">
+                    <i id="reloadIcon" class="fa-solid fa-sync text-white"></i>
+                </button>
+            </div>
+
+            <div class="flex bg-black/10 p-1 rounded-xl backdrop-blur-md">
+                <button onclick="switchTab('todo')" id="tab-todo" class="flex-1 py-2 text-sm font-bold rounded-lg bg-white text-gray-800 shadow-sm transition-all">Cần làm</button>
+                <button onclick="switchTab('all')" id="tab-all" class="flex-1 py-2 text-sm font-bold rounded-lg text-white hover:bg-white/10 transition-all">Tất cả</button>
             </div>
         </header>
 
         <div id="postList" class="p-4 space-y-3 pb-24 bg-gray-50 flex-1 overflow-y-auto min-h-[60vh]">
             <div class="flex flex-col items-center justify-center pt-20 text-gray-400 space-y-3">
-                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-500"></i>
+                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-gray-400"></i>
                 <p class="text-sm">Đang tải dữ liệu...</p>
             </div>
         </div>
@@ -48,32 +68,42 @@
 
     <div id="postModal" class="fixed inset-0 z-50 hidden">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
-        <div class="absolute bottom-0 w-full bg-white rounded-t-3xl p-6 flex flex-col max-h-[85vh] animate-[slideUp_0.3s_ease-out]">
-            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-5"></div>
+        <div class="absolute bottom-0 w-full bg-white rounded-t-3xl p-6 flex flex-col max-h-[90vh] animate-[slideUp_0.3s_ease-out]">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4"></div>
+            
             <div class="flex-1 overflow-y-auto hide-scrollbar pb-4">
                 <div class="flex items-center justify-between mb-3">
                     <span id="modalCategory" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 uppercase tracking-wide">...</span>
                     <span id="modalDate" class="text-xs font-semibold text-gray-400">...</span>
                 </div>
-                <h2 id="modalTopic" class="text-xl font-bold text-gray-900 leading-snug mb-5">...</h2>
-                <div class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative group">
+                
+                <h2 id="modalTopic" class="text-xl font-bold text-gray-900 leading-snug mb-4">...</h2>
+                
+                <div class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative group mb-4">
                     <button onclick="copyContent()" class="absolute top-2 right-2 bg-white p-2 rounded-lg shadow-sm border border-gray-100 text-gray-400 hover:text-blue-600 active:scale-95 transition-all z-10">
                         <i class="fa-regular fa-copy text-lg"></i>
                     </button>
-                    <p id="modalContent" class="text-gray-700 whitespace-pre-line text-sm leading-relaxed font-sans pr-2">...</p>
+                    <p id="modalContent" class="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed font-sans pr-2" style="font-size: 0.95rem; line-height: 1.6;">...</p>
                 </div>
-                <a id="modalImageLink" href="#" target="_blank" class="hidden mt-4 block relative rounded-xl overflow-hidden shadow-sm group border border-gray-200">
-                    <div class="flex items-center p-3 bg-white">
-                        <div class="bg-blue-100 p-2.5 rounded-lg mr-3 text-blue-600"><i class="fa-solid fa-image text-lg"></i></div>
-                        <div>
-                            <p class="text-xs font-bold text-gray-700">Hình ảnh đính kèm</p>
-                            <p class="text-[10px] text-gray-400">Bấm để xem và tải về</p>
+
+                <div id="imageArea" class="hidden">
+                    <div class="text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Hình ảnh</div>
+                    <div class="rounded-xl overflow-hidden border border-gray-200 relative bg-gray-100 shadow-sm">
+                        <img id="modalImagePreview" src="" class="w-full object-cover max-h-[300px]" onclick="previewImageFull()">
+                        <div class="flex border-t border-gray-200 bg-white">
+                            <button onclick="downloadImageBtn()" class="flex-1 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 active:bg-blue-50 border-r border-gray-200 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-download text-blue-600"></i> Tải
+                            </button>
+                            <button onclick="copyImageBtn()" class="flex-1 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 active:bg-blue-50 flex items-center justify-center gap-2">
+                                <i class="fa-regular fa-clone text-blue-600"></i> Copy
+                            </button>
                         </div>
                     </div>
-                </a>
+                </div>
             </div>
+
             <div class="pt-3 mt-2 border-t border-gray-100">
-                <button id="btnMarkDone" onclick="markAsDone()" class="w-full bg-[#0a66c2] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-200 active:scale-[0.98] transition-all flex justify-center items-center text-base">
+                <button id="btnMarkDone" onclick="markAsDone()" class="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-[0.98] transition-all flex justify-center items-center text-base">
                     Xác nhận ĐÃ ĐĂNG
                 </button>
             </div>
@@ -81,44 +111,98 @@
     </div>
 
     <script>
-        // LINK CỦA BẠN (GIỮ NGUYÊN)
-        const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTyEz9LDsK7hpJX5y1GhJqDHbIGrDlHXIk7UToKjOx-zYxBO34RuwhEd-MJNNPlXTsqn5vssq_yjSsz/pub?gid=0&single=true&output=csv";
+        // --- CẤU HÌNH ---
+        const SPREADSHEET_ID = "12Zd-Rn700gbt-_EkglFX2REc3ngUY4V8Z---yu69aRo";
         
-        // --- SỬ DỤNG PROXY MỚI (MẠNH HƠN) ---
-        const PROXY_URL = "https://api.allorigins.win/raw?url=" + encodeURIComponent(SHEET_URL);
+        // Cấu hình 2 tab dữ liệu
+        const ACCOUNTS = {
+            'felix': {
+                sheetName: "Trang tính1", // Tên tab trong GG Sheet
+                colorClass: "bg-felix",   // Màu xanh
+                title: "Felix's Brand",
+                storageKey: "126Verse_DoneList_Felix" // Key lưu trạng thái riêng
+            },
+            '126v': {
+                sheetName: "Trang tính2", // Tên tab trong GG Sheet
+                colorClass: "bg-126v",    // Màu tím
+                title: "126Verse Company",
+                storageKey: "126Verse_DoneList_Company" // Key lưu trạng thái riêng
+            }
+        };
 
+        let currentAccount = 'felix'; // Mặc định vào Felix trước
         let POSTS_DATA = [];
         let currentTab = 'todo';
         let selectedId = null;
-        let doneList = JSON.parse(localStorage.getItem('126Verse_DoneList')) || [];
+        let currentImgUrl = "";
+        let doneList = [];
 
         document.addEventListener('DOMContentLoaded', () => {
             const now = new Date();
             document.getElementById('currentDate').innerText = now.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' });
-            loadData();
+            
+            // Khôi phục tài khoản đã chọn lần trước (nếu có)
+            const savedAcc = localStorage.getItem('last_selected_account');
+            if(savedAcc && ACCOUNTS[savedAcc]) {
+                switchAccount(savedAcc);
+            } else {
+                loadData();
+            }
         });
+
+        // --- CHUYỂN ĐỔI TÀI KHOẢN ---
+        function switchAccount(accKey) {
+            currentAccount = accKey;
+            localStorage.setItem('last_selected_account', accKey); // Nhớ lựa chọn
+            
+            const config = ACCOUNTS[accKey];
+            
+            // Đổi giao diện
+            const header = document.getElementById('mainHeader');
+            header.className = `px-5 pt-6 pb-4 sticky top-0 z-30 shadow-md text-white transition-colors duration-500 ${config.colorClass}`;
+            
+            document.getElementById('headerTitle').innerText = config.title;
+            
+            // Đổi trạng thái nút bấm
+            document.getElementById('btn-acc-felix').className = `account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 ${accKey === 'felix' ? 'account-active' : 'account-inactive'}`;
+            document.getElementById('btn-acc-126v').className = `account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 ${accKey === '126v' ? 'account-active' : 'account-inactive'}`;
+
+            // Load lại dữ liệu mới
+            loadData();
+        }
+
+        // --- HÀM XỬ LÝ LINK ẢNH ---
+        function processImageUrl(url) {
+            if (!url) return "";
+            url = url.trim();
+            if (url.includes("drive.google.com") && url.includes("/d/")) {
+                const match = url.match(/\/d\/(.+?)\//);
+                if (match && match[1]) return `https://lh3.googleusercontent.com/d/${match[1]}`;
+            }
+            return url;
+        }
 
         function loadData() {
             const icon = document.getElementById('reloadIcon');
             icon.classList.add('fa-spin');
             
-            // Dùng Fetch API thay vì Papa.parse trực tiếp URL để kiểm soát lỗi tốt hơn
-            fetch(PROXY_URL + "&t=" + Date.now())
-                .then(response => {
-                    if (!response.ok) throw new Error("Không thể kết nối Server");
-                    return response.text();
-                })
-                .then(csvText => {
+            // Load danh sách đã xong của account hiện tại
+            doneList = JSON.parse(localStorage.getItem(ACCOUNTS[currentAccount].storageKey)) || [];
+            
+            const apiUrl = `https://opensheet.elk.sh/${SPREADSHEET_ID}/${ACCOUNTS[currentAccount].sheetName}`;
+            
+            fetch(apiUrl)
+                .then(res => { if (!res.ok) throw new Error("Lỗi kết nối"); return res.json(); })
+                .then(data => {
                     icon.classList.remove('fa-spin');
-                    
-                    // Parse CSV từ text
-                    const results = Papa.parse(csvText, {
-                        header: true,
-                        skipEmptyLines: true
-                    });
+                    // Kiểm tra nếu sheet rỗng hoặc lỗi
+                    if (data.error) {
+                        showError(`Chưa tìm thấy Sheet "${ACCOUNTS[currentAccount].sheetName}". Hãy tạo tab mới tên này trong Google Sheet.`);
+                        return;
+                    }
 
-                    if (results.data && results.data.length > 0) {
-                        POSTS_DATA = results.data
+                    if (data && data.length > 0) {
+                        POSTS_DATA = data
                             .filter(row => row.id && row.topic)
                             .map(row => ({
                                 id: row.id.toString().trim(),
@@ -126,20 +210,20 @@
                                 category: row.category ? row.category.trim() : "General",
                                 topic: row.topic ? row.topic.trim() : "No Title",
                                 content: row.content ? row.content.trim() : "",
-                                image_url: row.image_url ? row.image_url.trim() : ""
+                                image_url: processImageUrl(row.image_url ? row.image_url.trim() : "")
                             }));
                         renderList();
                         
-                        const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 1500 });
-                        Toast.fire({ icon: 'success', title: 'Đã cập nhật dữ liệu!' });
+                        // Hiệu ứng Toast nhẹ
+                        const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 1000 });
+                        Toast.fire({ icon: 'success', title: `Đã tải ${ACCOUNTS[currentAccount].title}` });
                     } else {
-                        showError("Sheet trống hoặc lỗi định dạng CSV.");
+                        document.getElementById('postList').innerHTML = `<div class="text-center p-10 text-gray-400">Sheet "${ACCOUNTS[currentAccount].sheetName}" đang trống.</div>`;
                     }
                 })
                 .catch(err => {
                     icon.classList.remove('fa-spin');
-                    console.error("Lỗi:", err);
-                    showError("Lỗi kết nối: " + err.message);
+                    showError("Lỗi kết nối. Kiểm tra lại tên Sheet trong code.");
                 });
         }
 
@@ -150,20 +234,10 @@
             let validPosts = POSTS_DATA.filter(p => p.date);
             validPosts.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            let displayPosts = [];
-            if (currentTab === 'todo') {
-                displayPosts = validPosts.filter(p => !doneList.includes(p.id));
-            } else {
-                displayPosts = validPosts;
-            }
+            let displayPosts = currentTab === 'todo' ? validPosts.filter(p => !doneList.includes(p.id)) : validPosts;
 
             if (displayPosts.length === 0) {
-                container.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-16 opacity-50 text-center">
-                        <i class="fa-solid fa-clipboard-check text-4xl mb-4 text-gray-300"></i>
-                        <p class="font-medium text-gray-500">Không có bài viết nào!</p>
-                        ${currentTab === 'todo' ? '<p class="text-xs text-gray-400 mt-2">Tuyệt vời! Bạn đã làm hết việc.</p>' : ''}
-                    </div>`;
+                container.innerHTML = `<div class="flex flex-col items-center justify-center py-16 opacity-50 text-center"><i class="fa-solid fa-box-open text-4xl mb-4 text-gray-300"></i><p class="font-medium text-gray-500">Chưa có bài viết nào!</p></div>`;
                 return;
             }
 
@@ -176,21 +250,22 @@
                     else dateStr = post.date;
                 } catch(e) {}
 
-                const statusHTML = isDone 
-                    ? `<span class="status-badge bg-green-100 text-green-700 flex items-center"><i class="fa-solid fa-check mr-1 text-[8px]"></i> ĐÃ ĐĂNG</span>` 
-                    : `<span class="status-badge bg-yellow-100 text-yellow-800">CHƯA ĐĂNG</span>`;
-                const opacityClass = isDone ? 'opacity-60 grayscale' : 'opacity-100';
+                // Màu badge theo Account
+                const badgeColor = currentAccount === 'felix' ? 'text-blue-600 bg-blue-50' : 'text-purple-600 bg-purple-50';
 
                 const html = `
-                <div onclick="openModal('${post.id}')" class="bg-white p-4 rounded-2xl card-shadow mb-3 active:scale-[0.98] transition-transform cursor-pointer border border-gray-100 ${opacityClass}">
+                <div onclick="openModal('${post.id}')" class="bg-white p-4 rounded-2xl card-shadow mb-3 active:scale-[0.98] transition-transform cursor-pointer border border-gray-100 ${isDone ? 'opacity-60 grayscale' : 'opacity-100'}">
                     <div class="flex justify-between items-start mb-2">
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-md min-w-[50px] text-center">${dateStr}</span>
-                            <span class="text-[10px] font-bold uppercase text-blue-600 tracking-wide line-clamp-1 bg-blue-50 px-2 py-1 rounded">${post.category}</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wide line-clamp-1 ${badgeColor} px-2 py-1 rounded">${post.category}</span>
                         </div>
-                        ${statusHTML}
+                        ${isDone ? '<span class="status-badge bg-green-100 text-green-700"><i class="fa-solid fa-check"></i> Xong</span>' : '<span class="status-badge bg-yellow-100 text-yellow-800">Chưa</span>'}
                     </div>
-                    <h3 class="font-bold text-gray-800 leading-snug line-clamp-2">${post.topic}</h3>
+                    <div class="flex gap-3">
+                        ${post.image_url ? `<div class="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 bg-cover bg-center" style="background-image: url('${post.image_url}')"></div>` : ''}
+                        <h3 class="font-bold text-gray-800 leading-snug line-clamp-2 flex-1 text-[15px]">${post.topic}</h3>
+                    </div>
                 </div>`;
                 container.insertAdjacentHTML('beforeend', html);
             });
@@ -204,55 +279,96 @@
             document.getElementById('modalCategory').innerText = post.category;
             try { document.getElementById('modalDate').innerText = new Date(post.date).toLocaleDateString('vi-VN'); } catch(e) { document.getElementById('modalDate').innerText = post.date; }
             document.getElementById('modalTopic').innerText = post.topic;
-            document.getElementById('modalContent').innerText = post.content;
             
-            const imgLink = document.getElementById('modalImageLink');
-            if (post.image_url && post.image_url.length > 5) {
-                imgLink.classList.remove('hidden');
-                imgLink.href = post.image_url;
+            // Fix hiển thị xuống dòng
+            let contentClean = post.content || "";
+            contentClean = contentClean.replace(/\\n/g, '\n');
+            document.getElementById('modalContent').innerText = contentClean;
+            
+            // Xử lý ảnh
+            const imgArea = document.getElementById('imageArea');
+            const imgPreview = document.getElementById('modalImagePreview');
+            
+            if (post.image_url) {
+                currentImgUrl = post.image_url;
+                imgPreview.src = post.image_url;
+                imgArea.classList.remove('hidden');
             } else {
-                imgLink.classList.add('hidden');
+                currentImgUrl = "";
+                imgArea.classList.add('hidden');
             }
 
             const btn = document.getElementById('btnMarkDone');
+            // Đổi màu nút theo Account
+            const btnClass = currentAccount === 'felix' ? 'bg-[#0a66c2]' : 'bg-[#6200ea]'; // Xanh hoặc Tím
+            
             if (isDone) {
                 btn.innerText = "Đã đăng bài này rồi";
                 btn.className = "w-full bg-gray-200 text-gray-500 font-bold py-3.5 rounded-xl cursor-not-allowed";
                 btn.disabled = true;
             } else {
                 btn.innerHTML = `<i class="fa-solid fa-check-circle mr-2"></i> Xác nhận ĐÃ ĐĂNG`;
-                btn.className = "w-full bg-[#0a66c2] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-200 active:scale-[0.98] transition-all flex justify-center items-center text-base";
+                btn.className = `w-full ${btnClass} text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-[0.98] transition-all flex justify-center items-center text-base`;
                 btn.disabled = false;
             }
             document.getElementById('postModal').classList.remove('hidden');
         }
+
         function closeModal() { document.getElementById('postModal').classList.add('hidden'); }
+        
         function switchTab(tab) {
             currentTab = tab;
-            const active = "flex-1 py-2 text-sm font-bold rounded-lg bg-white text-blue-900 shadow-sm transition-all";
-            const inactive = "flex-1 py-2 text-sm font-bold rounded-lg text-blue-100 hover:bg-white/10 transition-all";
+            const activeColor = currentAccount === 'felix' ? 'text-blue-900' : 'text-purple-900';
+            
+            const active = `flex-1 py-2 text-sm font-bold rounded-lg bg-white ${activeColor} shadow-sm transition-all`;
+            const inactive = "flex-1 py-2 text-sm font-bold rounded-lg text-white hover:bg-white/10 transition-all";
+            
             document.getElementById('tab-todo').className = tab === 'todo' ? active : inactive;
             document.getElementById('tab-all').className = tab === 'all' ? active : inactive;
             renderList();
         }
+
+        async function copyImageBtn() {
+            if (!currentImgUrl) return;
+            const btn = event.currentTarget;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+            try {
+                const response = await fetch(currentImgUrl);
+                const blob = await response.blob();
+                await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+                Swal.fire({ icon: 'success', title: 'Đã copy ảnh!', toast: true, position: 'top', timer: 1500, showConfirmButton: false });
+            } catch (err) {
+                Swal.fire({ icon: 'info', title: 'Không thể copy', text: 'Hãy nhấn giữ ảnh rồi chọn "Sao chép".', confirmButtonColor: '#0a66c2' });
+            } finally { btn.innerHTML = originalHtml; }
+        }
+
+        function downloadImageBtn() {
+            if (!currentImgUrl) return;
+            window.open(currentImgUrl, '_blank');
+        }
+
+        function previewImageFull() { if(currentImgUrl) window.open(currentImgUrl, '_blank'); }
+
         function copyContent() {
             navigator.clipboard.writeText(document.getElementById('modalContent').innerText).then(() => {
-                const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 1500 });
-                Toast.fire({ icon: 'success', title: 'Đã copy!' });
+                Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 1500 }).fire({ icon: 'success', title: 'Đã copy nội dung!' });
             });
         }
+
         function markAsDone() {
             if (!selectedId) return;
             if (!doneList.includes(selectedId)) {
                 doneList.push(selectedId);
-                localStorage.setItem('126Verse_DoneList', JSON.stringify(doneList));
+                // Lưu vào key riêng cho từng account
+                localStorage.setItem(ACCOUNTS[currentAccount].storageKey, JSON.stringify(doneList));
             }
             Swal.fire({ icon: 'success', title: 'Đã hoàn thành!', timer: 1000, showConfirmButton: false });
             closeModal();
             renderList();
         }
         function showError(msg) {
-            document.getElementById('postList').innerHTML = `<div class="text-center p-6 text-red-500 bg-red-50 rounded-2xl border border-red-100 mx-2"><i class="fa-solid fa-circle-exclamation text-3xl mb-3"></i><p class="font-bold text-sm">Lỗi kết nối</p><p class="text-xs mt-2">${msg}</p></div>`;
+            document.getElementById('postList').innerHTML = `<div class="text-center p-6 text-red-500 bg-red-50 rounded-2xl border border-red-100 mx-2"><i class="fa-solid fa-circle-exclamation text-3xl mb-3"></i><p class="font-bold text-sm">Lỗi</p><p class="text-xs mt-2">${msg}</p></div>`;
         }
     </script>
 </body>
