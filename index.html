@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>126Verse Content Manager (Drive Edition)</title>
+    <title>126Verse Hub Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -11,16 +11,23 @@
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; }
         .app-container { max-width: 480px; margin: 0 auto; min-height: 100vh; background: white; box-shadow: 0 0 15px rgba(0,0,0,0.05); }
+        
+        /* Màu thương hiệu */
         .bg-felix { background: linear-gradient(135deg, #0a66c2 0%, #004182 100%); }
         .bg-126v { background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
+        
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .card-shadow { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
         .status-badge { font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 4px 8px; rounded: 6px; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        /* Hiệu ứng chuyển đổi Account */
         .account-switcher { transition: all 0.3s ease; }
         .account-active { background: rgba(255,255,255,0.2); font-weight: bold; border: 1px solid rgba(255,255,255,0.4); }
         .account-inactive { opacity: 0.6; }
-        .upload-loading { position: absolute; inset: 0; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; }
+        
+        /* Màn hình Loading khi Upload */
+        .upload-loading { position: absolute; inset: 0; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -28,13 +35,24 @@
     <div class="app-container relative flex flex-col">
         <header id="mainHeader" class="bg-felix px-5 pt-6 pb-4 sticky top-0 z-30 shadow-md text-white transition-colors duration-500">
             <div class="flex justify-center mb-4 bg-black/20 p-1 rounded-2xl backdrop-blur-md mx-4">
-                <button onclick="switchAccount('felix')" id="btn-acc-felix" class="account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 account-active"><i class="fa-solid fa-user-tie"></i> Felix</button>
-                <button onclick="switchAccount('126v')" id="btn-acc-126v" class="account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 account-inactive"><i class="fa-solid fa-building"></i> 126V</button>
+                <button onclick="switchAccount('felix')" id="btn-acc-felix" class="account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 account-active">
+                    <i class="fa-solid fa-user-tie"></i> Felix
+                </button>
+                <button onclick="switchAccount('126v')" id="btn-acc-126v" class="account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 account-inactive">
+                    <i class="fa-solid fa-building"></i> 126V
+                </button>
             </div>
+
             <div class="flex justify-between items-center mb-3 px-1">
-                <div><h1 class="font-bold text-xl tracking-tight" id="headerTitle">Personal Brand</h1><p class="text-blue-100 text-xs opacity-90" id="currentDate">...</p></div>
-                <button onclick="loadData()" class="bg-white/10 p-2 rounded-full backdrop-blur-sm border border-white/20 active:scale-90 transition-transform"><i id="reloadIcon" class="fa-solid fa-sync text-white"></i></button>
+                <div>
+                    <h1 class="font-bold text-xl tracking-tight" id="headerTitle">Personal Brand</h1>
+                    <p class="text-blue-100 text-xs opacity-90" id="currentDate">...</p>
+                </div>
+                <button onclick="loadData()" class="bg-white/10 p-2 rounded-full backdrop-blur-sm border border-white/20 active:scale-90 transition-transform">
+                    <i id="reloadIcon" class="fa-solid fa-sync text-white"></i>
+                </button>
             </div>
+
             <div class="flex bg-black/10 p-1 rounded-xl backdrop-blur-md">
                 <button onclick="switchTab('todo')" id="tab-todo" class="flex-1 py-2 text-sm font-bold rounded-lg bg-white text-gray-800 shadow-sm transition-all">Cần làm</button>
                 <button onclick="switchTab('all')" id="tab-all" class="flex-1 py-2 text-sm font-bold rounded-lg text-white hover:bg-white/10 transition-all">Tất cả</button>
@@ -42,7 +60,10 @@
         </header>
 
         <div id="postList" class="p-4 space-y-3 pb-24 bg-gray-50 flex-1 overflow-y-auto min-h-[60vh]">
-            <div class="flex flex-col items-center justify-center pt-20 text-gray-400 space-y-3"><i class="fa-solid fa-circle-notch fa-spin text-3xl text-gray-400"></i><p class="text-sm">Đang tải dữ liệu...</p></div>
+            <div class="flex flex-col items-center justify-center pt-20 text-gray-400 space-y-3">
+                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-gray-400"></i>
+                <p class="text-sm">Đang tải dữ liệu...</p>
+            </div>
         </div>
     </div>
 
@@ -56,62 +77,91 @@
                     <span id="modalCategory" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 uppercase tracking-wide">...</span>
                     <span id="modalDate" class="text-xs font-semibold text-gray-400">...</span>
                 </div>
+                
                 <h2 id="modalTopic" class="text-xl font-bold text-gray-900 leading-snug mb-4">...</h2>
+                
                 <div class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative group mb-4">
-                    <button onclick="copyContent()" class="absolute top-2 right-2 bg-white p-2 rounded-lg shadow-sm border border-gray-100 text-gray-400 hover:text-blue-600 active:scale-95 transition-all z-10"><i class="fa-regular fa-copy text-lg"></i></button>
+                    <button onclick="copyContent()" class="absolute top-2 right-2 bg-white p-2 rounded-lg shadow-sm border border-gray-100 text-gray-400 hover:text-blue-600 active:scale-95 transition-all z-10">
+                        <i class="fa-regular fa-copy text-lg"></i>
+                    </button>
                     <p id="modalContent" class="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed font-sans pr-2" style="font-size: 0.95rem; line-height: 1.6;">...</p>
                 </div>
 
                 <div id="imageArea">
                     <div class="text-xs font-bold text-gray-500 uppercase mb-2 ml-1 flex justify-between">
                         <span>Hình ảnh</span>
-                        <label for="fileInput" class="text-blue-600 cursor-pointer hover:underline text-xs flex items-center"><i class="fa-solid fa-cloud-arrow-up mr-1"></i>Upload ảnh</label>
+                        <label for="fileInput" class="text-blue-600 cursor-pointer hover:underline text-xs flex items-center">
+                            <i class="fa-solid fa-cloud-arrow-up mr-1"></i>Thay ảnh khác
+                        </label>
                         <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="handleFileSelect(event)">
                     </div>
 
                     <div id="dropZone" class="rounded-xl overflow-hidden border-2 border-dashed border-gray-300 relative bg-gray-50 min-h-[200px] flex flex-col items-center justify-center transition-all" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
                         
                         <div id="uploadLoader" class="upload-loading hidden">
-                            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-600 mb-2"></i>
-                            <p class="text-xs font-bold text-gray-600">Đang đẩy lên Drive...</p>
-                            <p class="text-[10px] text-gray-400">(Vui lòng đợi 5-10s)</p>
+                            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-600 mb-3"></i>
+                            <p class="text-sm font-bold text-gray-800">Đang lưu vào Drive...</p>
+                            <p class="text-xs text-gray-500 mt-1">Đừng tắt trình duyệt nhé!</p>
                         </div>
 
                         <div id="imgPlaceholder" class="text-center p-6 pointer-events-none">
                             <i class="fa-brands fa-google-drive text-4xl text-gray-300 mb-2"></i>
-                            <p class="text-xs text-gray-400">Kéo thả để lưu vào Drive<br>& Cập nhật Sheet</p>
+                            <p class="text-xs text-gray-400">Kéo thả ảnh vào đây<br>để lưu vào Sheet</p>
                         </div>
 
                         <img id="modalImagePreview" src="" class="hidden w-full object-contain max-h-[350px] z-10 cursor-pointer" onclick="previewImageFull()">
                     </div>
 
                     <div id="imgToolbar" class="hidden flex border border-t-0 border-gray-200 bg-white rounded-b-xl">
-                        <button onclick="downloadImageBtn()" class="flex-1 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 border-r border-gray-200"><i class="fa-solid fa-download text-blue-600 mr-2"></i>Tải</button>
-                        <button onclick="copyImageBtn()" class="flex-1 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"><i class="fa-regular fa-clone text-blue-600 mr-2"></i>Copy</button>
+                        <button onclick="downloadImageBtn()" class="flex-1 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 border-r border-gray-200 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-download text-blue-600"></i> Tải về
+                        </button>
+                        <button onclick="copyImageBtn()" class="flex-1 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-2">
+                            <i class="fa-regular fa-clone text-blue-600"></i> Copy
+                        </button>
                     </div>
                 </div>
             </div>
 
             <div class="pt-3 mt-2 border-t border-gray-100">
-                <button id="btnMarkDone" onclick="markAsDone()" class="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-[0.98] transition-all flex justify-center items-center text-base">Xác nhận ĐÃ ĐĂNG</button>
+                <button id="btnMarkDone" onclick="markAsDone()" class="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-[0.98] transition-all flex justify-center items-center text-base">
+                    Xác nhận ĐÃ ĐĂNG
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // CẤU HÌNH (DÙNG LINK SCRIPT MỚI CỦA BẠN)
-        // ==========================================
+        // =======================================================================
+        // 1. CẤU HÌNH HỆ THỐNG
+        // =======================================================================
+        
+        // ID của file Google Sheet (Phần nằm giữa /d/ và /edit)
         const SPREADSHEET_ID = "12Zd-Rn700gbt-_EkglFX2REc3ngUY4V8Z---yu69aRo";
         
-        // Link Script MỚI (đã có code xử lý upload Drive)
+        // Link Apps Script (QUAN TRỌNG: Phải deploy quyền "Anyone")
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbziupYJyxsqLql8y27ZwKAUcJH5zq8t9NnQw33Dcd0sHAH6NsLgf7ukkdcdyGlv6YWSvA/exec"; 
 
+        // Cấu hình 2 tài khoản
         const ACCOUNTS = {
-            'felix': { sheetName: "Felix", colorClass: "bg-felix", title: "Felix's Brand", storageKey: "Done_Felix" },
-            '126v': { sheetName: "126V", colorClass: "bg-126v", title: "126Verse Company", storageKey: "Done_Company" }
+            'felix': {
+                sheetName: "Felix", // Tên tab trong Sheet
+                colorClass: "bg-felix",
+                title: "Felix's Brand",
+                storageKey: "Done_Felix"
+            },
+            '126v': {
+                sheetName: "126V", // Tên tab trong Sheet
+                colorClass: "bg-126v",
+                title: "126Verse Company",
+                storageKey: "Done_Company"
+            }
         };
 
+        // =======================================================================
+        // 2. LOGIC XỬ LÝ (KHÔNG CẦN SỬA)
+        // =======================================================================
+        
         let currentAccount = 'felix';
         let POSTS_DATA = [];
         let currentTab = 'todo';
@@ -119,28 +169,54 @@
         let currentImgUrl = "";
         let doneList = [];
 
+        // Khởi chạy
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('currentDate').innerText = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' });
+            
+            // Khôi phục account cũ
             const savedAcc = localStorage.getItem('last_acc');
             if(savedAcc && ACCOUNTS[savedAcc]) switchAccount(savedAcc);
             else loadData();
         });
 
+        // Đổi tài khoản
         function switchAccount(accKey) {
             currentAccount = accKey;
             localStorage.setItem('last_acc', accKey);
+            
             const config = ACCOUNTS[accKey];
             const header = document.getElementById('mainHeader');
+            
+            // Hiệu ứng đổi màu Header
             header.className = `px-5 pt-6 pb-4 sticky top-0 z-30 shadow-md text-white transition-colors duration-500 ${config.colorClass}`;
             document.getElementById('headerTitle').innerText = config.title;
+            
+            // Hiệu ứng nút chuyển
             document.getElementById('btn-acc-felix').className = `account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 ${accKey === 'felix' ? 'account-active' : 'account-inactive'}`;
             document.getElementById('btn-acc-126v').className = `account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 ${accKey === '126v' ? 'account-active' : 'account-inactive'}`;
+            
             loadData();
         }
 
+        // Hàm xử lý link ảnh Drive để hiển thị được
+        function processImageUrl(url) {
+            if (!url) return "";
+            url = url.trim();
+            if (url.includes("drive.google.com") && url.includes("/d/")) {
+                const match = url.match(/\/d\/(.+?)\//);
+                if (match && match[1]) {
+                    // Dùng link proxy lh3 để load ảnh Drive siêu nhanh
+                    return `https://lh3.googleusercontent.com/d/${match[1]}`;
+                }
+            }
+            return url;
+        }
+
+        // Tải dữ liệu từ Sheet (qua OpenSheet API cho nhanh)
         function loadData() {
             const icon = document.getElementById('reloadIcon');
             icon.classList.add('fa-spin');
+            
             doneList = JSON.parse(localStorage.getItem(ACCOUNTS[currentAccount].storageKey)) || [];
             
             fetch(`https://opensheet.elk.sh/${SPREADSHEET_ID}/${ACCOUNTS[currentAccount].sheetName}`)
@@ -148,28 +224,28 @@
                 .then(data => {
                     icon.classList.remove('fa-spin');
                     if (data && !data.error) {
-                        POSTS_DATA = data.filter(row => row.id).map(row => ({
-                            id: row.id.toString().trim(),
-                            date: row.date || "", category: row.category || "General",
-                            topic: row.topic || "No Title", content: row.content || "",
-                            image_url: processImageUrl(row.image_url)
-                        }));
+                        POSTS_DATA = data
+                            .filter(row => row.id && row.topic)
+                            .map(row => ({
+                                id: row.id.toString().trim(),
+                                date: row.date || "", 
+                                category: row.category || "General",
+                                topic: row.topic || "No Title", 
+                                content: row.content || "",
+                                image_url: processImageUrl(row.image_url)
+                            }));
                         renderList();
-                    } else showError("Lỗi Sheet hoặc Sheet rỗng.");
+                    } else {
+                        showError("Sheet rỗng hoặc sai tên Tab.");
+                    }
                 })
-                .catch(err => { icon.classList.remove('fa-spin'); showError("Lỗi kết nối."); });
+                .catch(err => {
+                    icon.classList.remove('fa-spin');
+                    showError("Lỗi kết nối mạng.");
+                });
         }
 
-        function processImageUrl(url) {
-            if (!url) return "";
-            if (url.includes("drive.google.com") && url.includes("/d/")) {
-                const match = url.match(/\/d\/(.+?)\//);
-                if (match && match[1]) return `https://lh3.googleusercontent.com/d/${match[1]}`;
-            }
-            return url;
-        }
-
-        // --- UPLOAD LOGIC (GOOGLE DRIVE) ---
+        // --- UPLOAD LOGIC (FIX CORS + GỬI DỮ LIỆU CHUẨN) ---
         function handleDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('bg-blue-50', 'border-blue-400'); }
         function handleDrop(e) { 
             e.preventDefault(); 
@@ -178,51 +254,65 @@
         }
         function handleFileSelect(e) { if (e.target.files.length) uploadProcess(e.target.files[0]); }
 
-        function uploadProcess(file) {
+        async function uploadProcess(file) {
             if (!file.type.startsWith('image/')) return Swal.fire('Chỉ chọn file ảnh!');
-            if (GOOGLE_SCRIPT_URL.includes("DÁN_LINK")) return Swal.fire('Chưa cấu hình Google Apps Script!');
+            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("DÁN_LINK")) return Swal.fire('Chưa điền link Apps Script!');
 
             const loader = document.getElementById('uploadLoader');
             loader.classList.remove('hidden');
 
             const reader = new FileReader();
-            reader.onload = function(e) {
-                const base64Data = e.target.result.split(',')[1]; // Lấy phần data sau dấu phẩy
+            reader.onload = async function(e) {
+                // Lấy chuỗi base64 sạch (bỏ phần header data:image...)
+                const base64Data = e.target.result.split(',')[1];
                 const mimeType = file.type;
 
-                // Gửi sang Apps Script
-                fetch(GOOGLE_SCRIPT_URL, {
-                    method: "POST",
-                    mode: "no-cors", 
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        spreadsheetId: SPREADSHEET_ID,
-                        sheetName: ACCOUNTS[currentAccount].sheetName,
-                        id: selectedId,
-                        imageBase64: base64Data, // Dữ liệu ảnh
-                        mimeType: mimeType
-                    })
-                })
-                .then(() => {
-                    // Vì no-cors không trả về response, ta giả định thành công sau khi gửi
-                    // Và tự tạo link blob để hiển thị tạm thời ngay lập tức
-                    loader.classList.add('hidden');
-                    const blobUrl = URL.createObjectURL(file);
-                    updateImageUI(blobUrl);
-                    currentImgUrl = blobUrl;
-                    
-                    Swal.fire({ 
-                        icon: 'success', 
-                        title: 'Đã tải lên Drive!', 
-                        text: 'Ảnh sẽ xuất hiện trong Sheet sau vài giây.',
-                        toast: true, position: 'top', timer: 3000 
+                try {
+                    // Gửi request tới Google Script
+                    // Dùng 'no-cors' không được đâu, phải dùng POST bình thường
+                    // Nhưng để tránh CORS preflight phức tạp, ta dùng text/plain
+                    const response = await fetch(GOOGLE_SCRIPT_URL, {
+                        method: "POST",
+                        redirect: "follow", // Quan trọng: Google Script hay redirect sau khi xong
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify({
+                            spreadsheetId: SPREADSHEET_ID,
+                            sheetName: ACCOUNTS[currentAccount].sheetName,
+                            id: selectedId,
+                            imageBase64: base64Data,
+                            mimeType: mimeType
+                        })
                     });
-                })
-                .catch(err => {
+
+                    const result = await response.json();
+
+                    if (result.result === "success") {
+                        loader.classList.add('hidden');
+                        
+                        // Hiển thị ảnh ngay lập tức bằng Blob (khỏi chờ tải lại từ mạng)
+                        const blobUrl = URL.createObjectURL(file);
+                        updateImageUI(blobUrl);
+                        currentImgUrl = blobUrl;
+                        
+                        // Cập nhật data trong bộ nhớ
+                        const postIdx = POSTS_DATA.findIndex(p => p.id == selectedId);
+                        if(postIdx > -1) POSTS_DATA[postIdx].image_url = result.imageUrl;
+
+                        Swal.fire({ 
+                            icon: 'success', 
+                            title: 'Thành công!', 
+                            text: 'Đã lưu vào Drive & Sheet.',
+                            toast: true, position: 'top', timer: 3000 
+                        });
+                    } else {
+                        throw new Error(result.error || "Lỗi từ Script");
+                    }
+
+                } catch (err) {
                     loader.classList.add('hidden');
                     console.error(err);
-                    Swal.fire('Lỗi', 'Không thể kết nối Script.', 'error');
-                });
+                    Swal.fire('Lỗi Upload', 'Hãy kiểm tra lại Apps Script (Quyền truy cập).', 'error');
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -241,25 +331,35 @@
             }
         }
 
+        // --- UI RENDERING ---
         function renderList() {
             const container = document.getElementById('postList');
             container.innerHTML = '';
+            
             let validPosts = POSTS_DATA.filter(p => p.date);
             validPosts.sort((a, b) => new Date(a.date) - new Date(b.date));
+
             let displayPosts = currentTab === 'todo' ? validPosts.filter(p => !doneList.includes(p.id)) : validPosts;
 
-            if (!displayPosts.length) { container.innerHTML = `<div class="py-16 text-center opacity-50"><i class="fa-solid fa-box-open text-4xl mb-4"></i><p>Trống!</p></div>`; return; }
+            if (!displayPosts.length) { 
+                container.innerHTML = `<div class="flex flex-col items-center justify-center py-16 opacity-50 text-center"><i class="fa-solid fa-box-open text-4xl mb-4 text-gray-300"></i><p class="font-medium text-gray-500">Trống!</p></div>`; 
+                return; 
+            }
 
             displayPosts.forEach(post => {
                 const isDone = doneList.includes(post.id);
                 let dateStr = post.date;
                 try { dateStr = new Date(post.date).toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit'}); } catch(e){}
+                
                 const badgeColor = currentAccount === 'felix' ? 'text-blue-600 bg-blue-50' : 'text-purple-600 bg-purple-50';
                 
                 container.insertAdjacentHTML('beforeend', `
                 <div onclick="openModal('${post.id}')" class="bg-white p-4 rounded-2xl card-shadow mb-3 active:scale-[0.98] transition-transform cursor-pointer border border-gray-100 ${isDone ? 'opacity-60 grayscale' : 'opacity-100'}">
                     <div class="flex justify-between items-start mb-2">
-                        <div class="flex items-center gap-2"><span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-md min-w-[50px] text-center">${dateStr}</span><span class="text-[10px] font-bold uppercase ${badgeColor} px-2 py-1 rounded line-clamp-1">${post.category}</span></div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-md min-w-[50px] text-center">${dateStr}</span>
+                            <span class="text-[10px] font-bold uppercase ${badgeColor} px-2 py-1 rounded line-clamp-1">${post.category}</span>
+                        </div>
                         ${isDone ? '<span class="status-badge bg-green-100 text-green-700"><i class="fa-solid fa-check"></i> Xong</span>' : '<span class="status-badge bg-yellow-100 text-yellow-800">Chưa</span>'}
                     </div>
                     <div class="flex gap-3">
@@ -278,6 +378,7 @@
             document.getElementById('modalCategory').innerText = post.category;
             document.getElementById('modalDate').innerText = post.date; 
             document.getElementById('modalTopic').innerText = post.topic;
+            // Fix xuống dòng
             document.getElementById('modalContent').innerText = (post.content || "").replace(/\\n/g, '\n');
             
             currentImgUrl = post.image_url || "";
