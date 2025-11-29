@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>126Verse Hub (Stable)</title>
+    <title>126Verse Hub</title>
+    
+    <link rel="icon" type="image/gif" href="rocket.gif">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; }
@@ -42,8 +44,9 @@
             </div>
         </header>
 
+        <div id="debugLog" class="hidden p-4 bg-red-100 text-red-700 text-xs font-mono break-all border-b border-red-200"></div>
         <div id="postList" class="p-4 space-y-3 pb-24 bg-gray-50 flex-1 overflow-y-auto min-h-[60vh]">
-            <div class="flex flex-col items-center justify-center pt-20 text-gray-400 space-y-3"><i class="fa-solid fa-circle-notch fa-spin text-3xl text-gray-400"></i><p class="text-sm">Đang tải dữ liệu...</p></div>
+            <div class="flex flex-col items-center justify-center pt-20 text-gray-400 space-y-3"><i class="fa-solid fa-circle-notch fa-spin text-3xl text-gray-400"></i><p class="text-sm">Đang tải...</p></div>
         </div>
     </div>
 
@@ -51,7 +54,6 @@
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
         <div class="absolute bottom-0 w-full bg-white rounded-t-3xl p-6 flex flex-col max-h-[95vh] animate-[slideUp_0.3s_ease-out]">
             <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4"></div>
-            
             <div class="flex-1 overflow-y-auto hide-scrollbar pb-4">
                 <div class="flex items-center justify-between mb-3">
                     <span id="modalCategory" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 uppercase tracking-wide">...</span>
@@ -62,61 +64,31 @@
                     <button onclick="copyContent()" class="absolute top-2 right-2 bg-white p-2 rounded-lg shadow-sm border border-gray-100 text-gray-400 hover:text-blue-600 active:scale-95 transition-all z-10"><i class="fa-regular fa-copy text-lg"></i></button>
                     <p id="modalContent" class="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed font-sans pr-2" style="font-size: 0.95rem; line-height: 1.6;">...</p>
                 </div>
-
                 <div id="imageArea">
                     <div class="text-xs font-bold text-gray-500 uppercase mb-2 ml-1 flex justify-between">
-                        <span>Trạng thái hình ảnh</span>
-                        <label for="fileInput" class="text-blue-600 cursor-pointer hover:underline text-xs flex items-center">
-                            <i class="fa-solid fa-cloud-arrow-up mr-1"></i>Đổi ảnh
-                        </label>
+                        <span>Hình ảnh</span>
+                        <label for="fileInput" class="text-blue-600 cursor-pointer hover:underline text-xs flex items-center"><i class="fa-solid fa-cloud-arrow-up mr-1"></i>Thay ảnh khác</label>
                         <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="handleFileSelect(event)">
                     </div>
-
-                    <div id="dropZone" class="rounded-xl overflow-hidden border-2 border-dashed border-gray-300 bg-gray-50 min-h-[120px] flex flex-col items-center justify-center transition-all p-4" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
-                        
-                        <div id="uploadLoader" class="upload-loading hidden">
-                            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-blue-600 mb-2"></i>
-                            <p class="text-xs font-bold text-gray-600">Đang xử lý...</p>
-                        </div>
-
-                        <div id="statusNoImage" class="text-center">
-                            <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center mx-auto mb-2 text-gray-400">
-                                <i class="fa-solid fa-image text-xl"></i>
-                            </div>
-                            <p class="text-xs text-gray-400">Chưa có ảnh. Kéo thả vào đây.</p>
-                        </div>
-
-                        <div id="statusHasImage" class="hidden text-center w-full">
-                            <div class="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3 mb-2">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                                        <i class="fa-solid fa-check"></i>
-                                    </div>
-                                    <div class="text-left">
-                                        <p class="text-sm font-bold text-green-700">Đã có ảnh</p>
-                                        <p class="text-[10px] text-green-600">Sẵn sàng để đăng</p>
-                                    </div>
-                                </div>
-                                <button onclick="openImageNewTab()" class="text-xs bg-white border border-green-200 text-green-700 px-3 py-1.5 rounded-md font-bold hover:bg-green-100">
-                                    Mở xem
-                                </button>
-                            </div>
-                            <p class="text-[10px] text-gray-400">Muốn đổi ảnh khác? Kéo thả ảnh mới vào đây.</p>
-                        </div>
+                    <div id="dropZone" class="rounded-xl overflow-hidden border-2 border-dashed border-gray-300 relative bg-gray-50 min-h-[200px] flex flex-col items-center justify-center transition-all" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
+                        <div id="uploadLoader" class="upload-loading hidden"><i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-600 mb-3"></i><p class="text-sm font-bold text-gray-800">Đang lưu...</p></div>
+                        <div id="imgPlaceholder" class="text-center p-6 pointer-events-none"><i class="fa-brands fa-google-drive text-4xl text-gray-300 mb-2"></i><p class="text-xs text-gray-400">Kéo thả ảnh vào đây</p></div>
+                        <img id="modalImagePreview" src="" class="hidden w-full object-contain max-h-[350px] z-10 cursor-pointer" onclick="previewImageFull()">
+                    </div>
+                    <div id="imgToolbar" class="hidden flex border border-t-0 border-gray-200 bg-white rounded-b-xl">
+                        <button onclick="downloadImageBtn()" class="flex-1 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 border-r border-gray-200"><i class="fa-solid fa-download text-blue-600 mr-2"></i>Tải</button>
+                        <button onclick="copyImageBtn()" class="flex-1 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"><i class="fa-regular fa-clone text-blue-600 mr-2"></i>Copy</button>
                     </div>
                 </div>
             </div>
-
             <div class="pt-3 mt-2 border-t border-gray-100">
-                <button id="btnMarkDone" onclick="markAsDone()" class="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-[0.98] transition-all flex justify-center items-center text-base">
-                    Xác nhận ĐÃ ĐĂNG
-                </button>
+                <button id="btnMarkDone" onclick="markAsDone()" class="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-[0.98] transition-all flex justify-center items-center text-base">Xác nhận ĐÃ ĐĂNG</button>
             </div>
         </div>
     </div>
 
     <script>
-        // CẤU HÌNH
+        // --- CẤU HÌNH ---
         const SPREADSHEET_ID = "12Zd-Rn700gbt-_EkglFX2REc3ngUY4V8Z---yu69aRo";
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwtsB-4Wi_yhF4EwNIxEzeqkx7wckNIcnYZqemJ-ZdPC7OM4eAuhzTUERZHl91rVCm-jw/exec"; 
 
@@ -140,49 +112,73 @@
             else loadData();
         });
 
-        // --- LOAD DATA (Dùng Google CSV) ---
+        // --- HÀM XỬ LÝ LINK ẢNH (WSRV.NL PROXY) ---
+        function processImageUrl(url) {
+            if (!url) return "";
+            if(url.startsWith("DRIVE_ID:")) return `https://wsrv.nl/?url=https://drive.google.com/uc?id=${url.split(':')[1]}&w=800`;
+            
+            let fileId = "";
+            if (url.includes("drive.google.com") && url.includes("/d/")) {
+                const match = url.match(/\/d\/(.+?)(\/|$)/);
+                if (match && match[1]) fileId = match[1];
+            } else if (url.includes("id=")) {
+                const match = url.match(/id=([^&]+)/);
+                if (match && match[1]) fileId = match[1];
+            }
+
+            if (fileId) return `https://wsrv.nl/?url=https://drive.google.com/uc?id=${fileId}&w=800`;
+            return url;
+        }
+
+        // --- LOAD DATA ---
         function loadData() {
             const icon = document.getElementById('reloadIcon');
             icon.classList.add('fa-spin');
+            document.getElementById('debugLog').classList.add('hidden');
+            
             doneList = JSON.parse(localStorage.getItem(ACCOUNTS[currentAccount].storageKey)) || [];
             localImageCache = JSON.parse(localStorage.getItem('126Verse_Local_Images')) || {};
 
-            const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${ACCOUNTS[currentAccount].sheetName}&t=${Date.now()}`;
-
-            Papa.parse(csvUrl, {
-                download: true, header: true, skipEmptyLines: true,
-                complete: function(results) {
+            // Sử dụng chính Google Script để load data (Tránh lỗi Opensheet)
+            fetch(`${GOOGLE_SCRIPT_URL}?sheet=${ACCOUNTS[currentAccount].sheetName}`)
+                .then(res => res.json())
+                .then(data => {
                     icon.classList.remove('fa-spin');
-                    if (results.data && results.data.length > 0) {
-                        POSTS_DATA = results.data.filter(row => row.id).map(row => {
+                    if (Array.isArray(data)) {
+                        POSTS_DATA = data.map(row => {
                             const cacheKey = currentAccount + "_" + row.id;
-                            const finalImage = localImageCache[cacheKey] || row.image_url;
-                            return {
-                                id: row.id.trim(),
-                                date: row.date || "", category: row.category || "General",
-                                topic: row.topic || "No Title", content: row.content || "",
-                                image_url: finalImage
-                            };
+                            const finalImage = localImageCache[cacheKey] || processImageUrl(row.image_url);
+                            return { ...row, image_url: finalImage };
                         });
                         renderList();
-                    } else document.getElementById('postList').innerHTML = `<div class="py-16 text-center opacity-50"><p>Chưa có dữ liệu.</p></div>`;
-                },
-                error: function(err) { icon.classList.remove('fa-spin'); console.log(err); }
-            });
+                    } else {
+                        document.getElementById('postList').innerHTML = `<div class="py-16 text-center opacity-50"><p>Chưa có dữ liệu.</p></div>`;
+                    }
+                })
+                .catch(err => {
+                    icon.classList.remove('fa-spin');
+                    const debugEl = document.getElementById('debugLog');
+                    debugEl.innerHTML = `Lỗi tải: ${err.message}`;
+                    debugEl.classList.remove('hidden');
+                });
         }
 
-        // --- RENDER LIST (CHẾ ĐỘ ICON) ---
+        // --- RENDER LIST (CẬP NHẬT ICON MỚI: DONE.GIF và NOTYET.PNG) ---
         function renderList() {
             const container = document.getElementById('postList');
             container.innerHTML = '';
             
-            if (!POSTS_DATA || POSTS_DATA.length === 0) { container.innerHTML = `<div class="py-16 text-center opacity-50"><i class="fa-solid fa-box-open text-4xl mb-4 text-gray-300"></i><p>Trống!</p></div>`; return; }
+            if (!POSTS_DATA || POSTS_DATA.length === 0) {
+                container.innerHTML = `<div class="py-16 text-center opacity-50"><i class="fa-solid fa-box-open text-4xl mb-4 text-gray-300"></i><p>Trống!</p></div>`; return; 
+            }
 
             let validPosts = POSTS_DATA.filter(p => p.date);
             validPosts.sort((a, b) => new Date(a.date) - new Date(b.date));
             let displayPosts = currentTab === 'todo' ? validPosts.filter(p => !doneList.includes(p.id)) : validPosts;
 
-            if (!displayPosts.length) { container.innerHTML = `<div class="py-16 text-center opacity-50"><i class="fa-solid fa-check-circle text-4xl mb-4 text-green-300"></i><p>Đã xong hết việc!</p></div>`; return; }
+            if (!displayPosts.length) { 
+                container.innerHTML = `<div class="py-16 text-center opacity-50"><i class="fa-solid fa-check-circle text-4xl mb-4 text-green-300"></i><p>Đã xong hết việc!</p></div>`; return; 
+            }
 
             displayPosts.forEach(post => {
                 const isDone = doneList.includes(post.id);
@@ -190,19 +186,20 @@
                 try { dateStr = new Date(post.date).toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit'}); } catch(e){}
                 const badgeColor = currentAccount === 'felix' ? 'text-blue-600 bg-blue-50' : 'text-purple-600 bg-purple-50';
                 
-                // --- THAY ĐỔI LỚN Ở ĐÂY: DÙNG ICON THAY VÌ ẢNH ---
-                let iconHTML = '';
-                if(post.image_url && post.image_url.length > 5) {
-                    // Có ảnh -> Icon Xanh
-                    iconHTML = `
-                    <div class="w-12 h-12 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
-                        <i class="fa-solid fa-image text-blue-500 text-xl"></i>
+                // [LOGIC ICON MỚI]
+                let thumbHTML = '';
+                if(post.image_url && post.image_url.length > 10) {
+                    // CÓ ẢNH -> Hiện Ảnh Thật (nền) + done.gif (icon xác nhận)
+                    thumbHTML = `
+                    <div class="relative w-12 h-12 flex-shrink-0 group">
+                        <img src="${post.image_url}" class="w-full h-full rounded-lg object-cover border border-gray-200" loading="lazy" onerror="this.src='https://via.placeholder.com/150'">
+                        <img src="done.gif" class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border border-white shadow-sm bg-white">
                     </div>`;
                 } else {
-                    // Không ảnh -> Icon Xám
-                    iconHTML = `
-                    <div class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0 opacity-50">
-                        <i class="fa-regular fa-image text-gray-400 text-xl"></i>
+                    // KHÔNG ẢNH -> Hiện notyet.png
+                    thumbHTML = `
+                    <div class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0 bg-gray-50">
+                        <img src="notyet.png" class="w-8 h-8 object-contain opacity-60">
                     </div>`;
                 }
 
@@ -213,34 +210,11 @@
                         ${isDone ? '<span class="status-badge bg-green-100 text-green-700"><i class="fa-solid fa-check"></i> Xong</span>' : '<span class="status-badge bg-yellow-100 text-yellow-800">Chưa</span>'}
                     </div>
                     <div class="flex gap-3">
-                        ${iconHTML}
+                        ${thumbHTML}
                         <h3 class="font-bold text-gray-800 leading-snug line-clamp-2 flex-1 text-[15px]">${post.topic}</h3>
                     </div>
                 </div>`);
             });
-        }
-
-        // --- UPDATE UI TRONG MODAL ---
-        function updateImageStatusUI(url) {
-            const noImgDiv = document.getElementById('statusNoImage');
-            const hasImgDiv = document.getElementById('statusHasImage');
-            const dropZone = document.getElementById('dropZone');
-            
-            if (url && url.length > 5) {
-                noImgDiv.classList.add('hidden');
-                hasImgDiv.classList.remove('hidden');
-                dropZone.classList.add('bg-green-50', 'border-green-300');
-                dropZone.classList.remove('bg-gray-50', 'border-gray-300');
-            } else {
-                noImgDiv.classList.remove('hidden');
-                hasImgDiv.classList.add('hidden');
-                dropZone.classList.remove('bg-green-50', 'border-green-300');
-                dropZone.classList.add('bg-gray-50', 'border-gray-300');
-            }
-        }
-
-        function openImageNewTab() {
-            if(currentImgUrl) window.open(currentImgUrl, '_blank');
         }
 
         // --- UPLOAD LOGIC ---
@@ -263,7 +237,6 @@
             if (!file.type.startsWith('image/')) return Swal.fire('Chỉ chọn file ảnh!');
             const loader = document.getElementById('uploadLoader');
             loader.classList.remove('hidden');
-
             try {
                 const compressed = await resizeAndCompressImage(file, 1000, 0.7);
                 const formData = new URLSearchParams();
@@ -277,51 +250,44 @@
                 const result = await response.json();
 
                 if (result.result === "success") {
-                    const newLink = result.imageUrl;
-                    currentImgUrl = newLink;
+                    loader.classList.add('hidden');
+                    // Xử lý link trả về dạng DRIVE_ID:xxx
+                    const fixLink = processImageUrl(result.imageUrl);
                     
-                    // Update UI & Cache
-                    updateImageStatusUI(newLink);
+                    updateImageUI(fixLink);
+                    currentImgUrl = fixLink;
                     const cacheKey = currentAccount + "_" + selectedId;
-                    localImageCache[cacheKey] = newLink; 
+                    localImageCache[cacheKey] = fixLink; 
                     localStorage.setItem('126Verse_Local_Images', JSON.stringify(localImageCache));
-
                     const postIdx = POSTS_DATA.findIndex(p => p.id == selectedId);
-                    if(postIdx > -1) POSTS_DATA[postIdx].image_url = newLink;
-
+                    if(postIdx > -1) POSTS_DATA[postIdx].image_url = fixLink;
                     renderList();
                     Swal.fire({ icon: 'success', title: 'Thành công!', toast: true, position: 'top', timer: 2000 });
                 } else throw new Error(result.error);
-
-            } catch (err) {
-                console.error(err);
-                Swal.fire('Lỗi', 'Không thể upload: ' + err.message, 'error');
-            } finally {
-                loader.classList.add('hidden');
-            }
+            } catch (err) { loader.classList.add('hidden'); console.error(err); Swal.fire('Lỗi', 'Upload thất bại', 'error'); }
         }
 
-        // --- CORE FUNCTIONS ---
-        function switchAccount(accKey) {
-            currentAccount = accKey; localStorage.setItem('last_acc', accKey);
-            const config = ACCOUNTS[accKey];
-            document.getElementById('mainHeader').className = `px-5 pt-6 pb-4 sticky top-0 z-30 shadow-md text-white transition-colors duration-500 ${config.colorClass}`;
-            document.getElementById('headerTitle').innerText = config.title;
-            document.getElementById('btn-acc-felix').className = `account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 ${accKey === 'felix' ? 'account-active' : 'account-inactive'}`;
-            document.getElementById('btn-acc-126v').className = `account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 ${accKey === '126v' ? 'account-active' : 'account-inactive'}`;
-            loadData();
+        function updateImageUI(url) {
+            const preview = document.getElementById('modalImagePreview');
+            const placeholder = document.getElementById('imgPlaceholder');
+            const toolbar = document.getElementById('imgToolbar');
+            if (url) { preview.src = url; preview.classList.remove('hidden'); placeholder.classList.add('hidden'); toolbar.classList.remove('hidden'); }
+            else { preview.src = ""; preview.classList.add('hidden'); placeholder.classList.remove('hidden'); toolbar.classList.add('hidden'); }
         }
+
+        function switchAccount(accKey) { currentAccount = accKey; localStorage.setItem('last_acc', accKey); const config = ACCOUNTS[accKey]; document.getElementById('mainHeader').className = `px-5 pt-6 pb-4 sticky top-0 z-30 shadow-md text-white transition-colors duration-500 ${config.colorClass}`; document.getElementById('headerTitle').innerText = config.title; document.getElementById('btn-acc-felix').className = `account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 ${accKey === 'felix' ? 'account-active' : 'account-inactive'}`; document.getElementById('btn-acc-126v').className = `account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 ${accKey === '126v' ? 'account-active' : 'account-inactive'}`; loadData(); }
+        function handleDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('bg-blue-50', 'border-blue-400'); }
+        function handleDrop(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('bg-blue-50', 'border-blue-400'); if (e.dataTransfer.files.length) uploadProcess(e.dataTransfer.files[0]); }
+        function handleFileSelect(e) { if (e.target.files.length) uploadProcess(e.target.files[0]); }
         function openModal(id) {
             selectedId = id; const post = POSTS_DATA.find(p => p.id == id); const isDone = doneList.includes(post.id);
             document.getElementById('modalCategory').innerText = post.category;
             document.getElementById('modalDate').innerText = post.date; 
             document.getElementById('modalTopic').innerText = post.topic;
             document.getElementById('modalContent').innerText = (post.content || "").replace(/\\n/g, '\n');
-            
             const cacheKey = currentAccount + "_" + post.id;
-            currentImgUrl = localImageCache[cacheKey] || post.image_url;
-            updateImageStatusUI(currentImgUrl);
-
+            currentImgUrl = localImageCache[cacheKey] || processImageUrl(post.image_url);
+            updateImageUI(currentImgUrl);
             const btn = document.getElementById('btnMarkDone');
             const btnClass = currentAccount === 'felix' ? 'bg-[#0a66c2]' : 'bg-[#6200ea]';
             if (isDone) { btn.innerText = "Đã đăng"; btn.className = "w-full bg-gray-200 text-gray-500 font-bold py-3.5 rounded-xl cursor-not-allowed"; btn.disabled = true; }
@@ -329,22 +295,12 @@
             document.getElementById('postModal').classList.remove('hidden');
         }
         function closeModal() { document.getElementById('postModal').classList.add('hidden'); }
-        function handleDragOver(e) { e.preventDefault(); }
-        function handleDrop(e) { e.preventDefault(); if (e.dataTransfer.files.length) uploadProcess(e.dataTransfer.files[0]); }
-        function handleFileSelect(e) { if (e.target.files.length) uploadProcess(e.target.files[0]); }
+        function switchTab(tab) { currentTab = tab; const activeColor = currentAccount === 'felix' ? 'text-blue-900' : 'text-purple-900'; document.getElementById('tab-todo').className = `flex-1 py-2 text-sm font-bold rounded-lg ${tab === 'todo' ? 'bg-white ' + activeColor : 'text-white hover:bg-white/10'} shadow-sm transition-all`; document.getElementById('tab-all').className = `flex-1 py-2 text-sm font-bold rounded-lg ${tab === 'all' ? 'bg-white ' + activeColor : 'text-white hover:bg-white/10'} shadow-sm transition-all`; renderList(); }
         function copyContent() { navigator.clipboard.writeText(document.getElementById('modalContent').innerText).then(() => Swal.fire({icon:'success', title:'Đã copy!', toast:true, position:'top', timer:1000})); }
-        function switchTab(tab) {
-            currentTab = tab;
-            const activeColor = currentAccount === 'felix' ? 'text-blue-900' : 'text-purple-900';
-            document.getElementById('tab-todo').className = `flex-1 py-2 text-sm font-bold rounded-lg ${tab === 'todo' ? 'bg-white ' + activeColor : 'text-white hover:bg-white/10'} shadow-sm transition-all`;
-            document.getElementById('tab-all').className = `flex-1 py-2 text-sm font-bold rounded-lg ${tab === 'all' ? 'bg-white ' + activeColor : 'text-white hover:bg-white/10'} shadow-sm transition-all`;
-            renderList();
-        }
-        function markAsDone() {
-            if(!selectedId) return;
-            if(!doneList.includes(selectedId)) { doneList.push(selectedId); localStorage.setItem(ACCOUNTS[currentAccount].storageKey, JSON.stringify(doneList)); }
-            closeModal(); renderList();
-        }
+        function downloadImageBtn() { if(currentImgUrl) window.open(currentImgUrl, '_blank'); }
+        async function copyImageBtn() { if (!currentImgUrl) return; try { const res = await fetch(currentImgUrl); const blob = await res.blob(); await navigator.clipboard.write([new ClipboardItem({[blob.type]: blob})]); Swal.fire({icon:'success', title:'Copied!', toast:true, position:'top'}); } catch(e) { Swal.fire({icon:'info', title:'Nhấn giữ ảnh để copy'}); } }
+        function previewImageFull() { if(currentImgUrl) window.open(currentImgUrl, '_blank'); }
+        function markAsDone() { if(!selectedId) return; if(!doneList.includes(selectedId)) { doneList.push(selectedId); localStorage.setItem(ACCOUNTS[currentAccount].storageKey, JSON.stringify(doneList)); } closeModal(); renderList(); }
     </script>
 </body>
 </html>
