@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>126Verse Hub (Stable)</title>
+    <title>126Verse Hub (Icon Images)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -171,7 +171,7 @@
             });
         }
 
-        // --- RENDER LIST (CHẾ ĐỘ ICON) ---
+        // --- RENDER LIST (CẬP NHẬT: DÙNG ẢNH GIF/PNG THAY ICON) ---
         function renderList() {
             const container = document.getElementById('postList');
             container.innerHTML = '';
@@ -190,19 +190,19 @@
                 try { dateStr = new Date(post.date).toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit'}); } catch(e){}
                 const badgeColor = currentAccount === 'felix' ? 'text-blue-600 bg-blue-50' : 'text-purple-600 bg-purple-50';
                 
-                // --- THAY ĐỔI LỚN Ở ĐÂY: DÙNG ICON THAY VÌ ẢNH ---
+                // --- THAY ĐỔI Ở ĐÂY: DÙNG done.gif VÀ notyet.png ---
                 let iconHTML = '';
                 if(post.image_url && post.image_url.length > 5) {
-                    // Có ảnh -> Icon Xanh
+                    // CÓ ẢNH -> Hiện done.gif
                     iconHTML = `
-                    <div class="w-12 h-12 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
-                        <i class="fa-solid fa-image text-blue-500 text-xl"></i>
+                    <div class="w-12 h-12 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0 p-2">
+                        <img src="done.gif" alt="Đã có ảnh" class="w-full h-full object-contain">
                     </div>`;
                 } else {
-                    // Không ảnh -> Icon Xám
+                    // KHÔNG ẢNH -> Hiện notyet.png
                     iconHTML = `
-                    <div class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0 opacity-50">
-                        <i class="fa-regular fa-image text-gray-400 text-xl"></i>
+                    <div class="w-12 h-12 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center flex-shrink-0 opacity-60 p-3">
+                        <img src="notyet.png" alt="Chưa có ảnh" class="w-full h-full object-contain">
                     </div>`;
                 }
 
