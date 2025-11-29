@@ -248,12 +248,31 @@
                 .catch(err => { icon.classList.remove('fa-spin'); showError("Lỗi kết nối."); });
         }
 
+        // --- HÀM XỬ LÝ LINK ẢNH (BẢN FIX MỚI NHẤT) ---
         function processImageUrl(url) {
             if (!url) return "";
-            if (url.includes("drive.google.com") && url.includes("/d/")) {
+            url = url.trim();
+            
+            // Tìm ID ảnh trong link Google Drive
+            let fileId = "";
+            
+            // Trường hợp 1: Link dạng /d/ FILE_ID /
+            if (url.includes("/d/")) {
                 const match = url.match(/\/d\/(.+?)(\/|$)/);
-                if (match && match[1]) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+                if (match && match[1]) fileId = match[1];
             }
+            // Trường hợp 2: Link dạng id= FILE_ID
+            else if (url.includes("id=")) {
+                const match = url.match(/id=([^&]+)/);
+                if (match && match[1]) fileId = match[1];
+            }
+
+            // Nếu tìm thấy ID, dùng Proxy của lh3 (Google Photos) để hiển thị
+            if (fileId) {
+                return `https://lh3.googleusercontent.com/d/${fileId}=w1000?authuser=0`;
+            }
+            
+            // Nếu không phải link Drive thì trả về nguyên gốc
             return url;
         }
 
@@ -423,4 +442,5 @@
     </script>
 </body>
 </html>
+
 
