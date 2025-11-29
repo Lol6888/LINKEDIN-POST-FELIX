@@ -1,430 +1,340 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>126Verse Content Hub</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>126Verse Content Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<style>
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; }
-.app-container { max-width: 480px; margin: 0 auto; min-height: 100vh; background: white; box-shadow: 0 0 15px rgba(0,0,0,0.05); }
-
-/* Màu nhận diện thương hiệu */
-.bg-felix { background: linear-gradient(135deg, #0a66c2 0%, #004182 100%); }
-.bg-126v { background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
-
-.hide-scrollbar::-webkit-scrollbar { display: none; }
-.card-shadow { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-.status-badge { font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 4px 8px; rounded: 6px; }
-.line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
-/* Hiệu ứng chuyển đổi Account */
-.account-switcher { transition: all 0.3s ease; }
-.account-active { background: rgba(255,255,255,0.2); font-weight: bold; border: 1px solid rgba(255,255,255,0.4); }
-.account-inactive { opacity: 0.6; }
-
-/* Màn hình Loading khi Upload */
-.upload-loading { position: absolute; inset: 0; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; }
-</style>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; }
+        .app-container { max-width: 480px; margin: 0 auto; min-height: 100vh; background: white; box-shadow: 0 0 15px rgba(0,0,0,0.05); }
+        .bg-felix { background: linear-gradient(135deg, #0a66c2 0%, #004182 100%); }
+        .bg-126v { background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .card-shadow { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .status-badge { font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 4px 8px; rounded: 6px; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .account-switcher { transition: all 0.3s ease; }
+        .account-active { background: rgba(255,255,255,0.2); font-weight: bold; border: 1px solid rgba(255,255,255,0.4); }
+        .account-inactive { opacity: 0.6; }
+        .upload-loading { position: absolute; inset: 0; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; }
+    </style>
 </head>
 <body class="bg-gray-100">
 
-<div class="app-container relative flex flex-col">
-<header id="mainHeader" class="bg-felix px-5 pt-6 pb-4 sticky top-0 z-30 shadow-md text-white transition-colors duration-500">
-<div class="flex justify-center mb-4 bg-black/20 p-1 rounded-2xl backdrop-blur-md mx-4">
-<button onclick="switchAccount('felix')" id="btn-acc-felix" class="account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 account-active">
-<i class="fa-solid fa-user-tie"></i> Felix
-</button>
-<button onclick="switchAccount('126v')" id="btn-acc-126v" class="account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 account-inactive">
-<i class="fa-solid fa-building"></i> 126V
-</button>
-</div>
+    <div class="app-container relative flex flex-col">
+        <header id="mainHeader" class="bg-felix px-5 pt-6 pb-4 sticky top-0 z-30 shadow-md text-white transition-colors duration-500">
+            <div class="flex justify-center mb-4 bg-black/20 p-1 rounded-2xl backdrop-blur-md mx-4">
+                <button onclick="switchAccount('felix')" id="btn-acc-felix" class="account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 account-active"><i class="fa-solid fa-user-tie"></i> Felix</button>
+                <button onclick="switchAccount('126v')" id="btn-acc-126v" class="account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 account-inactive"><i class="fa-solid fa-building"></i> 126V</button>
+            </div>
+            <div class="flex justify-between items-center mb-3 px-1">
+                <div><h1 class="font-bold text-xl tracking-tight" id="headerTitle">Personal Brand</h1><p class="text-blue-100 text-xs opacity-90" id="currentDate">...</p></div>
+                <button onclick="loadData()" class="bg-white/10 p-2 rounded-full backdrop-blur-sm border border-white/20 active:scale-90 transition-transform"><i id="reloadIcon" class="fa-solid fa-sync text-white"></i></button>
+            </div>
+            <div class="flex bg-black/10 p-1 rounded-xl backdrop-blur-md">
+                <button onclick="switchTab('todo')" id="tab-todo" class="flex-1 py-2 text-sm font-bold rounded-lg bg-white text-gray-800 shadow-sm transition-all">Cần làm</button>
+                <button onclick="switchTab('all')" id="tab-all" class="flex-1 py-2 text-sm font-bold rounded-lg text-white hover:bg-white/10 transition-all">Tất cả</button>
+            </div>
+        </header>
 
-<div class="flex justify-between items-center mb-3 px-1">
-<div>
-<h1 class="font-bold text-xl tracking-tight" id="headerTitle">Personal Brand</h1>
-<p class="text-blue-100 text-xs opacity-90" id="currentDate">...</p>
-</div>
-<button onclick="loadData()" class="bg-white/10 p-2 rounded-full backdrop-blur-sm border border-white/20 active:scale-90 transition-transform">
-<i id="reloadIcon" class="fa-solid fa-sync text-white"></i>
-</button>
-</div>
+        <div id="postList" class="p-4 space-y-3 pb-24 bg-gray-50 flex-1 overflow-y-auto min-h-[60vh]">
+            <div class="flex flex-col items-center justify-center pt-20 text-gray-400 space-y-3"><i class="fa-solid fa-circle-notch fa-spin text-3xl text-gray-400"></i><p class="text-sm">Đang tải dữ liệu...</p></div>
+        </div>
+    </div>
 
-<div class="flex bg-black/10 p-1 rounded-xl backdrop-blur-md">
-<button onclick="switchTab('todo')" id="tab-todo" class="flex-1 py-2 text-sm font-bold rounded-lg bg-white text-gray-800 shadow-sm transition-all">Cần làm</button>
-<button onclick="switchTab('all')" id="tab-all" class="flex-1 py-2 text-sm font-bold rounded-lg text-white hover:bg-white/10 transition-all">Tất cả</button>
-</div>
-</header>
+    <div id="postModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+        <div class="absolute bottom-0 w-full bg-white rounded-t-3xl p-6 flex flex-col max-h-[95vh] animate-[slideUp_0.3s_ease-out]">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4"></div>
+            <div class="flex-1 overflow-y-auto hide-scrollbar pb-4">
+                <div class="flex items-center justify-between mb-3">
+                    <span id="modalCategory" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 uppercase tracking-wide">...</span>
+                    <span id="modalDate" class="text-xs font-semibold text-gray-400">...</span>
+                </div>
+                <h2 id="modalTopic" class="text-xl font-bold text-gray-900 leading-snug mb-4">...</h2>
+                <div class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative group mb-4">
+                    <button onclick="copyContent()" class="absolute top-2 right-2 bg-white p-2 rounded-lg shadow-sm border border-gray-100 text-gray-400 hover:text-blue-600 active:scale-95 transition-all z-10"><i class="fa-regular fa-copy text-lg"></i></button>
+                    <p id="modalContent" class="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed font-sans pr-2" style="font-size: 0.95rem; line-height: 1.6;">...</p>
+                </div>
 
-<div id="postList" class="p-4 space-y-3 pb-24 bg-gray-50 flex-1 overflow-y-auto min-h-[60vh]">
-<div class="flex flex-col items-center justify-center pt-20 text-gray-400 space-y-3">
-<i class="fa-solid fa-circle-notch fa-spin text-3xl text-gray-400"></i>
-<p class="text-sm">Đang tải dữ liệu...</p>
-</div>
-</div>
-</div>
+                <div id="imageArea">
+                    <div class="text-xs font-bold text-gray-500 uppercase mb-2 ml-1 flex justify-between">
+                        <span>Hình ảnh</span>
+                        <label for="fileInput" class="text-blue-600 cursor-pointer hover:underline text-xs flex items-center"><i class="fa-solid fa-cloud-arrow-up mr-1"></i>Thay ảnh khác</label>
+                        <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="handleFileSelect(event)">
+                    </div>
+                    <div id="dropZone" class="rounded-xl overflow-hidden border-2 border-dashed border-gray-300 relative bg-gray-50 min-h-[200px] flex flex-col items-center justify-center transition-all" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
+                        <div id="uploadLoader" class="upload-loading hidden">
+                            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-600 mb-3"></i>
+                            <p class="text-sm font-bold text-gray-800">Đang lưu vào Drive...</p>
+                        </div>
+                        <div id="imgPlaceholder" class="text-center p-6 pointer-events-none">
+                            <i class="fa-brands fa-google-drive text-4xl text-gray-300 mb-2"></i><p class="text-xs text-gray-400">Kéo thả ảnh vào đây</p>
+                        </div>
+                        <img id="modalImagePreview" src="" class="hidden w-full object-contain max-h-[350px] z-10 cursor-pointer" onclick="previewImageFull()">
+                    </div>
+                    <div id="imgToolbar" class="hidden flex border border-t-0 border-gray-200 bg-white rounded-b-xl">
+                        <button onclick="downloadImageBtn()" class="flex-1 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 border-r border-gray-200"><i class="fa-solid fa-download text-blue-600 mr-2"></i>Tải</button>
+                        <button onclick="copyImageBtn()" class="flex-1 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"><i class="fa-regular fa-clone text-blue-600 mr-2"></i>Copy</button>
+                    </div>
+                </div>
+            </div>
+            <div class="pt-3 mt-2 border-t border-gray-100">
+                <button id="btnMarkDone" onclick="markAsDone()" class="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-[0.98] transition-all flex justify-center items-center text-base">Xác nhận ĐÃ ĐĂNG</button>
+            </div>
+        </div>
+    </div>
 
-<div id="postModal" class="fixed inset-0 z-50 hidden">
-<div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
-<div class="absolute bottom-0 w-full bg-white rounded-t-3xl p-6 flex flex-col max-h-[95vh] animate-[slideUp_0.3s_ease-out]">
-<div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4"></div>
+    <script>
+        // CẤU HÌNH
+        const SPREADSHEET_ID = "12Zd-Rn700gbt-_EkglFX2REc3ngUY4V8Z---yu69aRo";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznvKX9w3IDdBEkD0Fu-SdywRdPYclNO1rsFYm7zhzibjweEvlKDuXf3XRVwD2FIqqa/exec"; 
 
-<div class="flex-1 overflow-y-auto hide-scrollbar pb-4">
-<div class="flex items-center justify-between mb-3">
-<span id="modalCategory" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 uppercase tracking-wide">...</span>
-<span id="modalDate" class="text-xs font-semibold text-gray-400">...</span>
-</div>
+        const ACCOUNTS = {
+            'felix': { sheetName: "Felix", colorClass: "bg-felix", title: "Felix's Brand", storageKey: "Done_Felix" },
+            '126v': { sheetName: "126V", colorClass: "bg-126v", title: "126Verse Company", storageKey: "Done_Company" }
+        };
 
-<h2 id="modalTopic" class="text-xl font-bold text-gray-900 leading-snug mb-4">...</h2>
+        let currentAccount = 'felix';
+        let POSTS_DATA = [];
+        let currentTab = 'todo';
+        let selectedId = null;
+        let currentImgUrl = "";
+        let doneList = [];
+        let localImageCache = JSON.parse(localStorage.getItem('126Verse_Local_Images')) || {};
 
-<div class="bg-gray-50 rounded-xl p-4 border border-gray-100 relative group mb-4">
-<button onclick="copyContent()" class="absolute top-2 right-2 bg-white p-2 rounded-lg shadow-sm border border-gray-100 text-gray-400 hover:text-blue-600 active:scale-95 transition-all z-10">
-<i class="fa-regular fa-copy text-lg"></i>
-</button>
-<p id="modalContent" class="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed font-sans pr-2" style="font-size: 0.95rem; line-height: 1.6;">...</p>
-</div>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('currentDate').innerText = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' });
+            const savedAcc = localStorage.getItem('last_acc');
+            if(savedAcc && ACCOUNTS[savedAcc]) switchAccount(savedAcc);
+            else loadData();
+        });
 
-<div id="imageArea">
-<div class="text-xs font-bold text-gray-500 uppercase mb-2 ml-1 flex justify-between">
-<span>Hình ảnh</span>
-<label for="fileInput" class="text-blue-600 cursor-pointer hover:underline text-xs flex items-center">
-<i class="fa-solid fa-cloud-arrow-up mr-1"></i>Thay ảnh khác
-</label>
-<input type="file" id="fileInput" class="hidden" accept="image/*" onchange="handleFileSelect(event)">
-</div>
+        // --- HÀM XỬ LÝ ẢNH (QUAN TRỌNG: CHỈNH LẠI LINK DRIVE ĐỂ HIỆN) ---
+        function processImageUrl(url) {
+            if (!url) return "";
+            if (url.includes("drive.google.com") && url.includes("/d/")) {
+                const match = url.match(/\/d\/(.+?)(\/|$)/);
+                // Dùng link lh3 để load ảnh Drive siêu nhanh & không bị lỗi background
+                if (match && match[1]) return `https://lh3.googleusercontent.com/d/${match[1]}`;
+            }
+            return url;
+        }
 
-<div id="dropZone" class="rounded-xl overflow-hidden border-2 border-dashed border-gray-300 relative bg-gray-50 min-h-[200px] flex flex-col items-center justify-center transition-all" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
+        // --- LOAD DATA ---
+        function loadData() {
+            const icon = document.getElementById('reloadIcon');
+            icon.classList.add('fa-spin');
+            
+            // Lấy dữ liệu đã hoàn thành từ LocalStorage
+            doneList = JSON.parse(localStorage.getItem(ACCOUNTS[currentAccount].storageKey)) || [];
+            localImageCache = JSON.parse(localStorage.getItem('126Verse_Local_Images')) || {};
 
-<div id="uploadLoader" class="upload-loading hidden">
-<i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-600 mb-3"></i>
-<p class="text-sm font-bold text-gray-800">Đang nén & lưu ảnh...</p>
-<p class="text-xs text-gray-500 mt-1">Vui lòng đợi giây lát</p>
-</div>
+            // Gọi API
+            fetch(`https://opensheet.elk.sh/${SPREADSHEET_ID}/${ACCOUNTS[currentAccount].sheetName}`)
+                .then(res => res.json())
+                .then(data => {
+                    icon.classList.remove('fa-spin');
+                    if (data && !data.error) {
+                        POSTS_DATA = data.filter(row => row.id).map(row => {
+                            // Ưu tiên ảnh trong Cache (mới upload) hơn ảnh từ Sheet
+                            const cacheKey = currentAccount + "_" + row.id;
+                            const finalImage = localImageCache[cacheKey] || processImageUrl(row.image_url);
+                            
+                            return {
+                                id: row.id.toString().trim(),
+                                date: row.date || "", 
+                                category: row.category || "General",
+                                topic: row.topic || "No Title", 
+                                content: row.content || "",
+                                image_url: finalImage
+                            };
+                        });
+                        renderList();
+                    } else {
+                        // Nếu sheet rỗng, xóa list để tránh hiện rác
+                        POSTS_DATA = [];
+                        renderList();
+                    }
+                })
+                .catch(err => { 
+                    icon.classList.remove('fa-spin'); 
+                    console.log("Lỗi kết nối", err); 
+                    // Vẫn render nếu có cache cũ? (Ở đây ta chọn hiện lỗi/trống)
+                    document.getElementById('postList').innerHTML = `<div class="flex flex-col items-center justify-center py-16 opacity-50 text-center"><p class="font-medium text-gray-500">Lỗi kết nối. Thử lại sau.</p></div>`;
+                });
+        }
 
-<div id="imgPlaceholder" class="text-center p-6 pointer-events-none">
-<i class="fa-brands fa-google-drive text-4xl text-gray-300 mb-2"></i>
-<p class="text-xs text-gray-400">Kéo thả ảnh vào đây<br>để lưu vào Sheet</p>
-</div>
+        // --- RENDER LIST (ĐÃ FIX THUMBNAIL) ---
+        function renderList() {
+            const container = document.getElementById('postList');
+            container.innerHTML = '';
+            
+            if (!POSTS_DATA || POSTS_DATA.length === 0) {
+                container.innerHTML = `<div class="flex flex-col items-center justify-center py-16 opacity-50 text-center"><i class="fa-solid fa-box-open text-4xl mb-4 text-gray-300"></i><p class="font-medium text-gray-500">Trống!</p></div>`; 
+                return; 
+            }
 
-<img id="modalImagePreview" src="" class="hidden w-full object-contain max-h-[350px] z-10 cursor-pointer" onclick="previewImageFull()">
-</div>
+            let validPosts = POSTS_DATA.filter(p => p.date);
+            validPosts.sort((a, b) => new Date(a.date) - new Date(b.date));
+            let displayPosts = currentTab === 'todo' ? validPosts.filter(p => !doneList.includes(p.id)) : validPosts;
 
-<div id="imgToolbar" class="hidden flex border border-t-0 border-gray-200 bg-white rounded-b-xl">
-<button onclick="downloadImageBtn()" class="flex-1 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 border-r border-gray-200 flex items-center justify-center gap-2">
-<i class="fa-solid fa-download text-blue-600"></i> Tải về
-</button>
-<button onclick="copyImageBtn()" class="flex-1 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-2">
-<i class="fa-regular fa-clone text-blue-600"></i> Copy
-</button>
-</div>
-</div>
-</div>
+            if (!displayPosts.length) { 
+                container.innerHTML = `<div class="flex flex-col items-center justify-center py-16 opacity-50 text-center"><i class="fa-solid fa-check-circle text-4xl mb-4 text-green-300"></i><p class="font-medium text-gray-500">Đã xong hết việc!</p></div>`; 
+                return; 
+            }
 
-<div class="pt-3 mt-2 border-t border-gray-100">
-<button id="btnMarkDone" onclick="markAsDone()" class="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-[0.98] transition-all flex justify-center items-center text-base">
-Xác nhận ĐÃ ĐĂNG
-</button>
-</div>
-</div>
-</div>
+            displayPosts.forEach(post => {
+                const isDone = doneList.includes(post.id);
+                let dateStr = post.date;
+                try { dateStr = new Date(post.date).toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit'}); } catch(e){}
+                const badgeColor = currentAccount === 'felix' ? 'text-blue-600 bg-blue-50' : 'text-purple-600 bg-purple-50';
+                
+                // [FIX] Dùng thẻ IMG thay vì DIV Background để hiện ảnh Drive chuẩn
+                let thumbHTML = '';
+                if(post.image_url) {
+                    thumbHTML = `<img src="${post.image_url}" class="w-12 h-12 rounded-lg object-cover border border-gray-200 flex-shrink-0" onerror="this.style.display='none'">`;
+                }
 
-<script>
-// ==========================================
-// CẤU HÌNH (ĐÃ CẬP NHẬT THEO YÊU CẦU)
-// ==========================================
-const SPREADSHEET_ID = "12Zd-Rn700gbt-_EkglFX2REc3ngUY4V8Z---yu69aRo";
+                container.insertAdjacentHTML('beforeend', `
+                <div onclick="openModal('${post.id}')" class="bg-white p-4 rounded-2xl card-shadow mb-3 active:scale-[0.98] transition-transform cursor-pointer border border-gray-100 ${isDone ? 'opacity-60 grayscale' : 'opacity-100'}">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-2"><span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-md min-w-[50px] text-center">${dateStr}</span><span class="text-[10px] font-bold uppercase ${badgeColor} px-2 py-1 rounded line-clamp-1">${post.category}</span></div>
+                        ${isDone ? '<span class="status-badge bg-green-100 text-green-700"><i class="fa-solid fa-check"></i> Xong</span>' : '<span class="status-badge bg-yellow-100 text-yellow-800">Chưa</span>'}
+                    </div>
+                    <div class="flex gap-3">
+                        ${thumbHTML}
+                        <h3 class="font-bold text-gray-800 leading-snug line-clamp-2 flex-1 text-[15px]">${post.topic}</h3>
+                    </div>
+                </div>`);
+            });
+        }
 
-// Link Apps Script của bạn
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznvKX9w3IDdBEkD0Fu-SdywRdPYclNO1rsFYm7zhzibjweEvlKDuXf3XRVwD2FIqqa/exec"; 
+        // --- CÁC HÀM KHÁC (UPLOAD, SWITCH ACCOUNT...) GIỮ NGUYÊN ---
+        function resizeAndCompressImage(file, maxWidth, quality) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = function() {
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > maxWidth) {
+                            height = height * (maxWidth / width);
+                            width = maxWidth;
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        const base64 = dataUrl.split(',')[1];
+                        resolve({ base64: base64, mimeType: 'image/jpeg' });
+                    }
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
 
-const ACCOUNTS = {
-'felix': {
-sheetName: "Felix",  // Đã sửa thành "Felix"
-colorClass: "bg-felix",
-title: "Felix's Brand",
-storageKey: "Done_Felix"
-},
-'126v': {
-sheetName: "126V",   // Đã sửa thành "126V"
-colorClass: "bg-126v",
-title: "126Verse Company",
-storageKey: "Done_Company"
-}
-};
+        function switchAccount(accKey) {
+            currentAccount = accKey;
+            localStorage.setItem('last_acc', accKey);
+            const config = ACCOUNTS[accKey];
+            const header = document.getElementById('mainHeader');
+            header.className = `px-5 pt-6 pb-4 sticky top-0 z-30 shadow-md text-white transition-colors duration-500 ${config.colorClass}`;
+            document.getElementById('headerTitle').innerText = config.title;
+            document.getElementById('btn-acc-felix').className = `account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 ${accKey === 'felix' ? 'account-active' : 'account-inactive'}`;
+            document.getElementById('btn-acc-126v').className = `account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 ${accKey === '126v' ? 'account-active' : 'account-inactive'}`;
+            loadData();
+        }
 
-let currentAccount = 'felix';
-let POSTS_DATA = [];
-let currentTab = 'todo';
-let selectedId = null;
-let currentImgUrl = "";
-let doneList = [];
-// Cache ảnh cục bộ
-let localImageCache = JSON.parse(localStorage.getItem('126Verse_Local_Images')) || {};
+        function handleDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('bg-blue-50', 'border-blue-400'); }
+        function handleDrop(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('bg-blue-50', 'border-blue-400'); if (e.dataTransfer.files.length) uploadProcess(e.dataTransfer.files[0]); }
+        function handleFileSelect(e) { if (e.target.files.length) uploadProcess(e.target.files[0]); }
 
-document.addEventListener('DOMContentLoaded', () => {
-document.getElementById('currentDate').innerText = new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' });
-const savedAcc = localStorage.getItem('last_acc');
-if(savedAcc && ACCOUNTS[savedAcc]) switchAccount(savedAcc);
-else loadData();
-});
+        async function uploadProcess(file) {
+            if (!file.type.startsWith('image/')) return Swal.fire('Chỉ chọn file ảnh!');
+            const loader = document.getElementById('uploadLoader');
+            loader.classList.remove('hidden');
+            try {
+                const compressed = await resizeAndCompressImage(file, 1000, 0.7);
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST", redirect: "follow", headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ spreadsheetId: SPREADSHEET_ID, sheetName: ACCOUNTS[currentAccount].sheetName, id: selectedId, imageBase64: compressed.base64, mimeType: compressed.mimeType })
+                });
+                const result = await response.json();
+                if (result.result === "success") {
+                    loader.classList.add('hidden');
+                    const blobUrl = URL.createObjectURL(file);
+                    updateImageUI(blobUrl);
+                    currentImgUrl = blobUrl;
+                    
+                    // Lưu Cache
+                    const fixLink = processImageUrl(result.imageUrl);
+                    const cacheKey = currentAccount + "_" + selectedId;
+                    localImageCache[cacheKey] = fixLink; 
+                    localStorage.setItem('126Verse_Local_Images', JSON.stringify(localImageCache));
 
-// --- HÀM NÉN ẢNH (QUAN TRỌNG ĐỂ KHÔNG LỖI UPLOAD) ---
-function resizeAndCompressImage(file, maxWidth, quality) {
-return new Promise((resolve, reject) => {
-const reader = new FileReader();
-reader.readAsDataURL(file);
-reader.onload = function(event) {
-const img = new Image();
-img.src = event.target.result;
-img.onload = function() {
-let width = img.width;
-let height = img.height;
-if (width > maxWidth) {
-height = height * (maxWidth / width);
-width = maxWidth;
-}
-const canvas = document.createElement('canvas');
-canvas.width = width;
-canvas.height = height;
-const ctx = canvas.getContext('2d');
-ctx.drawImage(img, 0, 0, width, height);
-// Nén ảnh thành JPEG
-const dataUrl = canvas.toDataURL('image/jpeg', quality);
-const base64 = dataUrl.split(',')[1];
-resolve({ base64: base64, mimeType: 'image/jpeg' });
-}
-};
-reader.onerror = error => reject(error);
-});
-}
+                    const postIdx = POSTS_DATA.findIndex(p => p.id == selectedId);
+                    if(postIdx > -1) POSTS_DATA[postIdx].image_url = fixLink;
 
-function switchAccount(accKey) {
-currentAccount = accKey;
-localStorage.setItem('last_acc', accKey);
-const config = ACCOUNTS[accKey];
-const header = document.getElementById('mainHeader');
-header.className = `px-5 pt-6 pb-4 sticky top-0 z-30 shadow-md text-white transition-colors duration-500 ${config.colorClass}`;
-document.getElementById('headerTitle').innerText = config.title;
-document.getElementById('btn-acc-felix').className = `account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 ${accKey === 'felix' ? 'account-active' : 'account-inactive'}`;
-document.getElementById('btn-acc-126v').className = `account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 ${accKey === '126v' ? 'account-active' : 'account-inactive'}`;
-loadData();
-}
+                    renderList();
+                    Swal.fire({ icon: 'success', title: 'Thành công!', toast: true, position: 'top', timer: 2000 });
+                } else throw new Error(result.error);
+            } catch (err) {
+                loader.classList.add('hidden'); console.error(err); Swal.fire('Lỗi', err.message, 'error');
+            }
+        }
 
-function loadData() {
-const icon = document.getElementById('reloadIcon');
-icon.classList.add('fa-spin');
-doneList = JSON.parse(localStorage.getItem(ACCOUNTS[currentAccount].storageKey)) || [];
-localImageCache = JSON.parse(localStorage.getItem('126Verse_Local_Images')) || {};
+        function updateImageUI(url) {
+            const preview = document.getElementById('modalImagePreview');
+            const placeholder = document.getElementById('imgPlaceholder');
+            const toolbar = document.getElementById('imgToolbar');
+            if (url) { preview.src = url; preview.classList.remove('hidden'); placeholder.classList.add('hidden'); toolbar.classList.remove('hidden'); }
+            else { preview.src = ""; preview.classList.add('hidden'); placeholder.classList.remove('hidden'); toolbar.classList.add('hidden'); }
+        }
 
-// Fetch dữ liệu từ OpenSheet
-fetch(`https://opensheet.elk.sh/${SPREADSHEET_ID}/${ACCOUNTS[currentAccount].sheetName}?t=${Date.now()}`)
-.then(res => res.json())
-.then(data => {
-icon.classList.remove('fa-spin');
-if (data && !data.error) {
-POSTS_DATA = data.filter(row => row.id).map(row => {
-// Ưu tiên ảnh trong Cache (mới upload) hơn ảnh từ Sheet (có thể bị chậm cập nhật)
-const cacheKey = currentAccount + "_" + row.id;
-const finalImage = localImageCache[cacheKey] || processImageUrl(row.image_url);
+        function openModal(id) {
+            selectedId = id;
+            const post = POSTS_DATA.find(p => p.id == id);
+            const isDone = doneList.includes(post.id);
+            document.getElementById('modalCategory').innerText = post.category;
+            document.getElementById('modalDate').innerText = post.date; 
+            document.getElementById('modalTopic').innerText = post.topic;
+            document.getElementById('modalContent').innerText = (post.content || "").replace(/\\n/g, '\n');
+            currentImgUrl = post.image_url;
+            updateImageUI(currentImgUrl);
+            const btn = document.getElementById('btnMarkDone');
+            const btnClass = currentAccount === 'felix' ? 'bg-[#0a66c2]' : 'bg-[#6200ea]';
+            if (isDone) { btn.innerText = "Đã đăng"; btn.className = "w-full bg-gray-200 text-gray-500 font-bold py-3.5 rounded-xl cursor-not-allowed"; btn.disabled = true; }
+            else { btn.innerHTML = `Xác nhận ĐÃ ĐĂNG`; btn.className = `w-full ${btnClass} text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-[0.98] transition-all`; btn.disabled = false; }
+            document.getElementById('postModal').classList.remove('hidden');
+        }
 
-return {
-id: row.id.toString().trim(),
-date: row.date || "", 
-category: row.category || "General",
-topic: row.topic || "No Title", 
-content: row.content || "",
-image_url: finalImage
-};
-});
-renderList();
-} else {
-// Xử lý trường hợp tab mới tạo chưa có dữ liệu
-document.getElementById('postList').innerHTML = `<div class="flex flex-col items-center justify-center py-16 opacity-50 text-center"><i class="fa-solid fa-file-excel text-4xl mb-4 text-gray-300"></i><p class="font-medium text-gray-500">Trang tính "${ACCOUNTS[currentAccount].sheetName}" đang trống hoặc sai tên.</p></div>`;
-}
-})
-.catch(err => { icon.classList.remove('fa-spin'); showError("Lỗi kết nối."); });
-}
-
-// --- HÀM XỬ LÝ LINK ẢNH (BẢN FIX MỚI NHẤT) ---
-function processImageUrl(url) {
-if (!url) return "";
-if (url.includes("drive.google.com") && url.includes("/d/")) {
-const match = url.match(/\/d\/(.+?)(\/|$)/);
-if (match && match[1]) {
-    // Dùng link lh3 để hiển thị ảnh thumbnail cực nhanh
-    return `https://lh3.googleusercontent.com/d/${match[1]}`;
-}
-}
-return url;
-}
-
-// --- UPLOAD LOGIC ---
-function handleDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('bg-blue-50', 'border-blue-400'); }
-function handleDrop(e) { 
-e.preventDefault(); 
-document.getElementById('dropZone').classList.remove('bg-blue-50', 'border-blue-400');
-if (e.dataTransfer.files.length) uploadProcess(e.dataTransfer.files[0]);
-}
-function handleFileSelect(e) { if (e.target.files.length) uploadProcess(e.target.files[0]); }
-
-async function uploadProcess(file) {
-if (!file.type.startsWith('image/')) return Swal.fire('Chỉ chọn file ảnh!');
-
-const loader = document.getElementById('uploadLoader');
-loader.classList.remove('hidden');
-
-try {
-// 1. Nén ảnh (Fix lỗi dung lượng lớn)
-const compressed = await resizeAndCompressImage(file, 1000, 0.7);
-
-// 2. Gửi lên Script
-const response = await fetch(GOOGLE_SCRIPT_URL, {
-method: "POST",
-redirect: "follow",
-headers: { "Content-Type": "text/plain;charset=utf-8" },
-body: JSON.stringify({
-spreadsheetId: SPREADSHEET_ID,
-sheetName: ACCOUNTS[currentAccount].sheetName, // Tự động lấy đúng tên sheet (Felix hoặc 126V)
-id: selectedId,
-imageBase64: compressed.base64,
-mimeType: compressed.mimeType
-})
-});
-
-const result = await response.json();
-
-if (result.result === "success") {
-loader.classList.add('hidden');
-
-// 3. Hiển thị ảnh ngay lập tức (Optimistic UI)
-const byteCharacters = atob(compressed.base64);
-const byteNumbers = new Array(byteCharacters.length);
-for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
-const byteArray = new Uint8Array(byteNumbers);
-const blob = new Blob([byteArray], {type: 'image/jpeg'});
-const blobUrl = URL.createObjectURL(blob);
-
-updateImageUI(blobUrl);
-currentImgUrl = blobUrl;
-
-// 4. Lưu Cache vĩnh viễn (để F5 không mất)
-const cacheKey = currentAccount + "_" + selectedId;
-// Lưu link thật từ server trả về để cache
-localImageCache[cacheKey] = processImageUrl(result.imageUrl); 
-localStorage.setItem('126Verse_Local_Images', JSON.stringify(localImageCache));
-
-// 5. Update Data trong RAM
-const postIdx = POSTS_DATA.findIndex(p => p.id == selectedId);
-if(postIdx > -1) POSTS_DATA[postIdx].image_url = processImageUrl(result.imageUrl);
-
-renderList();
-Swal.fire({ icon: 'success', title: 'Thành công!', text: 'Đã lưu ảnh (Đã nén & tối ưu).', toast: true, position: 'top', timer: 2000 });
-} else {
-throw new Error(result.error || "Lỗi từ Script");
-}
-
-} catch (err) {
-loader.classList.add('hidden');
-console.error(err);
-Swal.fire('Lỗi Upload', 'Chi tiết: ' + err.message, 'error');
-}
-}
-
-function updateImageUI(url) {
-const preview = document.getElementById('modalImagePreview');
-const placeholder = document.getElementById('imgPlaceholder');
-const toolbar = document.getElementById('imgToolbar');
-if (url) {
-preview.src = url; preview.classList.remove('hidden');
-placeholder.classList.add('hidden'); toolbar.classList.remove('hidden');
-} else {
-preview.src = ""; preview.classList.add('hidden');
-placeholder.classList.remove('hidden'); toolbar.classList.add('hidden');
-}
-}
-
-function renderList() {
-const container = document.getElementById('postList');
-container.innerHTML = '';
-let validPosts = POSTS_DATA.filter(p => p.date);
-validPosts.sort((a, b) => new Date(a.date) - new Date(b.date));
-let displayPosts = currentTab === 'todo' ? validPosts.filter(p => !doneList.includes(p.id)) : validPosts;
-
-if (!displayPosts.length) { container.innerHTML = `<div class="py-16 text-center opacity-50"><i class="fa-solid fa-box-open text-4xl mb-4 text-gray-300"></i><p>Trống!</p></div>`; return; }
-
-displayPosts.forEach(post => {
-const isDone = doneList.includes(post.id);
-let dateStr = post.date;
-try { dateStr = new Date(post.date).toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit'}); } catch(e){}
-const badgeColor = currentAccount === 'felix' ? 'text-blue-600 bg-blue-50' : 'text-purple-600 bg-purple-50';
-
-// [ĐÃ SỬA] Dùng thẻ IMG cho thumbnail
-let thumbHTML = '';
-if(post.image_url) thumbHTML = `<img src="${post.image_url}" class="w-12 h-12 rounded-lg object-cover border border-gray-200 flex-shrink-0" loading="lazy">`;
-
-container.insertAdjacentHTML('beforeend', `
-<div onclick="openModal('${post.id}')" class="bg-white p-4 rounded-2xl card-shadow mb-3 active:scale-[0.98] transition-transform cursor-pointer border border-gray-100 ${isDone ? 'opacity-60 grayscale' : 'opacity-100'}">
-<div class="flex justify-between items-start mb-2">
-<div class="flex items-center gap-2"><span class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-md min-w-[50px] text-center">${dateStr}</span><span class="text-[10px] font-bold uppercase ${badgeColor} px-2 py-1 rounded line-clamp-1">${post.category}</span></div>
-${isDone ? '<span class="status-badge bg-green-100 text-green-700"><i class="fa-solid fa-check"></i> Xong</span>' : '<span class="status-badge bg-yellow-100 text-yellow-800">Chưa</span>'}
-</div>
-<div class="flex gap-3">
-${thumbHTML}
-<h3 class="font-bold text-gray-800 leading-snug line-clamp-2 flex-1 text-[15px]">${post.topic}</h3>
-</div>
-</div>`);
-});
-}
-
-function openModal(id) {
-selectedId = id;
-const post = POSTS_DATA.find(p => p.id == id);
-const isDone = doneList.includes(post.id);
-
-document.getElementById('modalCategory').innerText = post.category;
-document.getElementById('modalDate').innerText = post.date; 
-document.getElementById('modalTopic').innerText = post.topic;
-document.getElementById('modalContent').innerText = (post.content || "").replace(/\\n/g, '\n');
-
-currentImgUrl = processImageUrl(post.image_url);
-updateImageUI(currentImgUrl);
-
-const btn = document.getElementById('btnMarkDone');
-const btnClass = currentAccount === 'felix' ? 'bg-[#0a66c2]' : 'bg-[#6200ea]';
-
-if (isDone) {
-btn.innerText = "Đã đăng"; btn.className = "w-full bg-gray-200 text-gray-500 font-bold py-3.5 rounded-xl cursor-not-allowed"; btn.disabled = true;
-} else {
-btn.innerHTML = `Xác nhận ĐÃ ĐĂNG`; btn.className = `w-full ${btnClass} text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-[0.98] transition-all`; btn.disabled = false;
-}
-document.getElementById('postModal').classList.remove('hidden');
-}
-
-function closeModal() { document.getElementById('postModal').classList.add('hidden'); }
-function switchTab(tab) {
-currentTab = tab;
-const activeColor = currentAccount === 'felix' ? 'text-blue-900' : 'text-purple-900';
-document.getElementById('tab-todo').className = `flex-1 py-2 text-sm font-bold rounded-lg ${tab === 'todo' ? 'bg-white ' + activeColor : 'text-white hover:bg-white/10'} shadow-sm transition-all`;
-document.getElementById('tab-all').className = `flex-1 py-2 text-sm font-bold rounded-lg ${tab === 'all' ? 'bg-white ' + activeColor : 'text-white hover:bg-white/10'} shadow-sm transition-all`;
-renderList();
-}
-function copyContent() { navigator.clipboard.writeText(document.getElementById('modalContent').innerText).then(() => Swal.fire({icon:'success', title:'Đã copy!', toast:true, position:'top', timer:1000})); }
-function downloadImageBtn() { if(currentImgUrl) window.open(currentImgUrl, '_blank'); }
-async function copyImageBtn() {
-if (!currentImgUrl) return;
-try { const res = await fetch(currentImgUrl); const blob = await res.blob(); await navigator.clipboard.write([new ClipboardItem({[blob.type]: blob})]); Swal.fire({icon:'success', title:'Copied!', toast:true, position:'top'}); } 
-catch(e) { Swal.fire({icon:'info', title:'Nhấn giữ ảnh để copy'}); }
-}
-function previewImageFull() { if(currentImgUrl) window.open(currentImgUrl, '_blank'); }
-function markAsDone() {
-if(!selectedId) return;
-if(!doneList.includes(selectedId)) { doneList.push(selectedId); localStorage.setItem(ACCOUNTS[currentAccount].storageKey, JSON.stringify(doneList)); }
-closeModal(); renderList();
-}
-function showError(msg) { console.log(msg); }
-</script>
+        function closeModal() { document.getElementById('postModal').classList.add('hidden'); }
+        function switchTab(tab) {
+            currentTab = tab;
+            const activeColor = currentAccount === 'felix' ? 'text-blue-900' : 'text-purple-900';
+            document.getElementById('tab-todo').className = `flex-1 py-2 text-sm font-bold rounded-lg ${tab === 'todo' ? 'bg-white ' + activeColor : 'text-white hover:bg-white/10'} shadow-sm transition-all`;
+            document.getElementById('tab-all').className = `flex-1 py-2 text-sm font-bold rounded-lg ${tab === 'all' ? 'bg-white ' + activeColor : 'text-white hover:bg-white/10'} shadow-sm transition-all`;
+            renderList();
+        }
+        function copyContent() { navigator.clipboard.writeText(document.getElementById('modalContent').innerText).then(() => Swal.fire({icon:'success', title:'Đã copy!', toast:true, position:'top', timer:1000})); }
+        function downloadImageBtn() { if(currentImgUrl) window.open(currentImgUrl, '_blank'); }
+        async function copyImageBtn() { if (!currentImgUrl) return; try { const res = await fetch(currentImgUrl); const blob = await res.blob(); await navigator.clipboard.write([new ClipboardItem({[blob.type]: blob})]); Swal.fire({icon:'success', title:'Copied!', toast:true, position:'top'}); } catch(e) { Swal.fire({icon:'info', title:'Nhấn giữ ảnh để copy'}); } }
+        function previewImageFull() { if(currentImgUrl) window.open(currentImgUrl, '_blank'); }
+        function markAsDone() {
+            if(!selectedId) return;
+            if(!doneList.includes(selectedId)) { doneList.push(selectedId); localStorage.setItem(ACCOUNTS[currentAccount].storageKey, JSON.stringify(doneList)); }
+            closeModal(); renderList();
+        }
+    </script>
 </body>
 </html>
