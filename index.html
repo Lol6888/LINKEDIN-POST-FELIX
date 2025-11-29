@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>126Verse Content Hub</title>
+    <title>126Verse Hub (Fixed)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -50,6 +50,7 @@
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
         <div class="absolute bottom-0 w-full bg-white rounded-t-3xl p-6 flex flex-col max-h-[95vh] animate-[slideUp_0.3s_ease-out]">
             <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4"></div>
+            
             <div class="flex-1 overflow-y-auto hide-scrollbar pb-4">
                 <div class="flex items-center justify-between mb-3">
                     <span id="modalCategory" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 uppercase tracking-wide">...</span>
@@ -70,7 +71,7 @@
                     <div id="dropZone" class="rounded-xl overflow-hidden border-2 border-dashed border-gray-300 relative bg-gray-50 min-h-[200px] flex flex-col items-center justify-center transition-all" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
                         <div id="uploadLoader" class="upload-loading hidden">
                             <i class="fa-solid fa-circle-notch fa-spin text-4xl text-blue-600 mb-3"></i>
-                            <p class="text-sm font-bold text-gray-800">Đang lưu vào Drive...</p>
+                            <p class="text-sm font-bold text-gray-800">Đang lưu ảnh...</p>
                         </div>
                         <div id="imgPlaceholder" class="text-center p-6 pointer-events-none">
                             <i class="fa-brands fa-google-drive text-4xl text-gray-300 mb-2"></i><p class="text-xs text-gray-400">Kéo thả ảnh vào đây</p>
@@ -90,9 +91,9 @@
     </div>
 
     <script>
-        // CẤU HÌNH
+        // --- CẤU HÌNH (ĐÃ ĐIỀN SẴN) ---
         const SPREADSHEET_ID = "12Zd-Rn700gbt-_EkglFX2REc3ngUY4V8Z---yu69aRo";
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbznvKX9w3IDdBEkD0Fu-SdywRdPYclNO1rsFYm7zhzibjweEvlKDuXf3XRVwD2FIqqa/exec"; 
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbziupYJyxsqLql8y27ZwKAUcJH5zq8t9NnQw33Dcd0sHAH6NsLgf7ukkdcdyGlv6YWSvA/exec";
 
         const ACCOUNTS = {
             'felix': { sheetName: "Felix", colorClass: "bg-felix", title: "Felix's Brand", storageKey: "Done_Felix" },
@@ -114,13 +115,30 @@
             else loadData();
         });
 
-        // --- HÀM XỬ LÝ ẢNH (QUAN TRỌNG: CHỈNH LẠI LINK DRIVE ĐỂ HIỆN) ---
+        // --- HÀM XỬ LÝ LINK ẢNH (BẢN FIX: DÙNG THUMBNAIL API) ---
         function processImageUrl(url) {
             if (!url) return "";
-            if (url.includes("drive.google.com") && url.includes("/d/")) {
+            url = url.trim();
+            let fileId = "";
+
+            // 1. Lấy ID từ link script trả về (googleusercontent...)
+            if (url.includes("googleusercontent.com/profile/picture/0")) {
+                fileId = url.split("/picture/0")[1];
+            }
+            // 2. Lấy ID từ link Drive thường
+            else if (url.includes("/d/")) {
                 const match = url.match(/\/d\/(.+?)(\/|$)/);
-                // Dùng link lh3 để load ảnh Drive siêu nhanh & không bị lỗi background
-                if (match && match[1]) return `https://lh3.googleusercontent.com/d/${match[1]}`;
+                if (match && match[1]) fileId = match[1];
+            }
+            // 3. Lấy ID từ tham số id=
+            else if (url.includes("id=")) {
+                const match = url.match(/id=([^&]+)/);
+                if (match && match[1]) fileId = match[1];
+            }
+
+            // Trả về link Thumbnail API (Luôn hiển thị được)
+            if (fileId) {
+                return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
             }
             return url;
         }
@@ -129,64 +147,42 @@
         function loadData() {
             const icon = document.getElementById('reloadIcon');
             icon.classList.add('fa-spin');
-            
-            // Lấy dữ liệu đã hoàn thành từ LocalStorage
             doneList = JSON.parse(localStorage.getItem(ACCOUNTS[currentAccount].storageKey)) || [];
             localImageCache = JSON.parse(localStorage.getItem('126Verse_Local_Images')) || {};
 
-            // Gọi API
-            fetch(`https://opensheet.elk.sh/${SPREADSHEET_ID}/${ACCOUNTS[currentAccount].sheetName}`)
+            fetch(`https://opensheet.elk.sh/${SPREADSHEET_ID}/${ACCOUNTS[currentAccount].sheetName}?t=${Date.now()}`)
                 .then(res => res.json())
                 .then(data => {
                     icon.classList.remove('fa-spin');
                     if (data && !data.error) {
                         POSTS_DATA = data.filter(row => row.id).map(row => {
-                            // Ưu tiên ảnh trong Cache (mới upload) hơn ảnh từ Sheet
                             const cacheKey = currentAccount + "_" + row.id;
+                            // Ưu tiên cache trước để load nhanh
                             const finalImage = localImageCache[cacheKey] || processImageUrl(row.image_url);
-                            
                             return {
                                 id: row.id.toString().trim(),
-                                date: row.date || "", 
-                                category: row.category || "General",
-                                topic: row.topic || "No Title", 
-                                content: row.content || "",
+                                date: row.date || "", category: row.category || "General",
+                                topic: row.topic || "No Title", content: row.content || "",
                                 image_url: finalImage
                             };
                         });
                         renderList();
                     } else {
-                        // Nếu sheet rỗng, xóa list để tránh hiện rác
-                        POSTS_DATA = [];
-                        renderList();
+                        document.getElementById('postList').innerHTML = `<div class="py-16 text-center opacity-50"><p>Chưa có bài viết.</p></div>`;
                     }
                 })
-                .catch(err => { 
-                    icon.classList.remove('fa-spin'); 
-                    console.log("Lỗi kết nối", err); 
-                    // Vẫn render nếu có cache cũ? (Ở đây ta chọn hiện lỗi/trống)
-                    document.getElementById('postList').innerHTML = `<div class="flex flex-col items-center justify-center py-16 opacity-50 text-center"><p class="font-medium text-gray-500">Lỗi kết nối. Thử lại sau.</p></div>`;
-                });
+                .catch(err => { icon.classList.remove('fa-spin'); });
         }
 
-        // --- RENDER LIST (ĐÃ FIX THUMBNAIL) ---
+        // --- RENDER LIST ---
         function renderList() {
             const container = document.getElementById('postList');
             container.innerHTML = '';
-            
-            if (!POSTS_DATA || POSTS_DATA.length === 0) {
-                container.innerHTML = `<div class="flex flex-col items-center justify-center py-16 opacity-50 text-center"><i class="fa-solid fa-box-open text-4xl mb-4 text-gray-300"></i><p class="font-medium text-gray-500">Trống!</p></div>`; 
-                return; 
-            }
-
             let validPosts = POSTS_DATA.filter(p => p.date);
             validPosts.sort((a, b) => new Date(a.date) - new Date(b.date));
             let displayPosts = currentTab === 'todo' ? validPosts.filter(p => !doneList.includes(p.id)) : validPosts;
 
-            if (!displayPosts.length) { 
-                container.innerHTML = `<div class="flex flex-col items-center justify-center py-16 opacity-50 text-center"><i class="fa-solid fa-check-circle text-4xl mb-4 text-green-300"></i><p class="font-medium text-gray-500">Đã xong hết việc!</p></div>`; 
-                return; 
-            }
+            if (!displayPosts.length) { container.innerHTML = `<div class="py-16 text-center opacity-50"><i class="fa-solid fa-box-open text-4xl mb-4 text-gray-300"></i><p>Trống!</p></div>`; return; }
 
             displayPosts.forEach(post => {
                 const isDone = doneList.includes(post.id);
@@ -194,10 +190,10 @@
                 try { dateStr = new Date(post.date).toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit'}); } catch(e){}
                 const badgeColor = currentAccount === 'felix' ? 'text-blue-600 bg-blue-50' : 'text-purple-600 bg-purple-50';
                 
-                // [FIX] Dùng thẻ IMG thay vì DIV Background để hiện ảnh Drive chuẩn
+                // THUMBNAIL (Dùng thẻ IMG)
                 let thumbHTML = '';
-                if(post.image_url) {
-                    thumbHTML = `<img src="${post.image_url}" class="w-12 h-12 rounded-lg object-cover border border-gray-200 flex-shrink-0" onerror="this.style.display='none'">`;
+                if(post.image_url && post.image_url.length > 10) {
+                    thumbHTML = `<img src="${post.image_url}" class="w-12 h-12 rounded-lg object-cover border border-gray-200 flex-shrink-0 bg-gray-100" loading="lazy">`;
                 }
 
                 container.insertAdjacentHTML('beforeend', `
@@ -214,7 +210,7 @@
             });
         }
 
-        // --- CÁC HÀM KHÁC (UPLOAD, SWITCH ACCOUNT...) GIỮ NGUYÊN ---
+        // --- UPLOAD & OPEN MODAL ---
         function resizeAndCompressImage(file, maxWidth, quality) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -235,34 +231,18 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
                         const dataUrl = canvas.toDataURL('image/jpeg', quality);
-                        const base64 = dataUrl.split(',')[1];
-                        resolve({ base64: base64, mimeType: 'image/jpeg' });
+                        resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
                     }
                 };
                 reader.onerror = error => reject(error);
             });
         }
 
-        function switchAccount(accKey) {
-            currentAccount = accKey;
-            localStorage.setItem('last_acc', accKey);
-            const config = ACCOUNTS[accKey];
-            const header = document.getElementById('mainHeader');
-            header.className = `px-5 pt-6 pb-4 sticky top-0 z-30 shadow-md text-white transition-colors duration-500 ${config.colorClass}`;
-            document.getElementById('headerTitle').innerText = config.title;
-            document.getElementById('btn-acc-felix').className = `account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 ${accKey === 'felix' ? 'account-active' : 'account-inactive'}`;
-            document.getElementById('btn-acc-126v').className = `account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 ${accKey === '126v' ? 'account-active' : 'account-inactive'}`;
-            loadData();
-        }
-
-        function handleDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('bg-blue-50', 'border-blue-400'); }
-        function handleDrop(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('bg-blue-50', 'border-blue-400'); if (e.dataTransfer.files.length) uploadProcess(e.dataTransfer.files[0]); }
-        function handleFileSelect(e) { if (e.target.files.length) uploadProcess(e.target.files[0]); }
-
         async function uploadProcess(file) {
             if (!file.type.startsWith('image/')) return Swal.fire('Chỉ chọn file ảnh!');
             const loader = document.getElementById('uploadLoader');
             loader.classList.remove('hidden');
+
             try {
                 const compressed = await resizeAndCompressImage(file, 1000, 0.7);
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
@@ -272,12 +252,13 @@
                 const result = await response.json();
                 if (result.result === "success") {
                     loader.classList.add('hidden');
-                    const blobUrl = URL.createObjectURL(file);
-                    updateImageUI(blobUrl);
-                    currentImgUrl = blobUrl;
+                    // Xử lý link mới ngay lập tức
+                    const fixLink = processImageUrl(result.imageUrl);
+                    
+                    updateImageUI(fixLink);
+                    currentImgUrl = fixLink;
                     
                     // Lưu Cache
-                    const fixLink = processImageUrl(result.imageUrl);
                     const cacheKey = currentAccount + "_" + selectedId;
                     localImageCache[cacheKey] = fixLink; 
                     localStorage.setItem('126Verse_Local_Images', JSON.stringify(localImageCache));
@@ -285,20 +266,12 @@
                     const postIdx = POSTS_DATA.findIndex(p => p.id == selectedId);
                     if(postIdx > -1) POSTS_DATA[postIdx].image_url = fixLink;
 
-                    renderList();
+                    renderList(); // Refresh list để hiện thumbnail
                     Swal.fire({ icon: 'success', title: 'Thành công!', toast: true, position: 'top', timer: 2000 });
                 } else throw new Error(result.error);
             } catch (err) {
                 loader.classList.add('hidden'); console.error(err); Swal.fire('Lỗi', err.message, 'error');
             }
-        }
-
-        function updateImageUI(url) {
-            const preview = document.getElementById('modalImagePreview');
-            const placeholder = document.getElementById('imgPlaceholder');
-            const toolbar = document.getElementById('imgToolbar');
-            if (url) { preview.src = url; preview.classList.remove('hidden'); placeholder.classList.add('hidden'); toolbar.classList.remove('hidden'); }
-            else { preview.src = ""; preview.classList.add('hidden'); placeholder.classList.remove('hidden'); toolbar.classList.add('hidden'); }
         }
 
         function openModal(id) {
@@ -309,8 +282,12 @@
             document.getElementById('modalDate').innerText = post.date; 
             document.getElementById('modalTopic').innerText = post.topic;
             document.getElementById('modalContent').innerText = (post.content || "").replace(/\\n/g, '\n');
-            currentImgUrl = post.image_url;
+            
+            // Xử lý ảnh (ưu tiên cache)
+            const cacheKey = currentAccount + "_" + post.id;
+            currentImgUrl = localImageCache[cacheKey] || processImageUrl(post.image_url);
             updateImageUI(currentImgUrl);
+
             const btn = document.getElementById('btnMarkDone');
             const btnClass = currentAccount === 'felix' ? 'bg-[#0a66c2]' : 'bg-[#6200ea]';
             if (isDone) { btn.innerText = "Đã đăng"; btn.className = "w-full bg-gray-200 text-gray-500 font-bold py-3.5 rounded-xl cursor-not-allowed"; btn.disabled = true; }
@@ -318,6 +295,23 @@
             document.getElementById('postModal').classList.remove('hidden');
         }
 
+        function updateImageUI(url) {
+            const preview = document.getElementById('modalImagePreview');
+            const placeholder = document.getElementById('imgPlaceholder');
+            const toolbar = document.getElementById('imgToolbar');
+            if (url) { preview.src = url; preview.classList.remove('hidden'); placeholder.classList.add('hidden'); toolbar.classList.remove('hidden'); }
+            else { preview.src = ""; preview.classList.add('hidden'); placeholder.classList.remove('hidden'); toolbar.classList.add('hidden'); }
+        }
+
+        function switchAccount(accKey) {
+            currentAccount = accKey; localStorage.setItem('last_acc', accKey);
+            const config = ACCOUNTS[accKey];
+            document.getElementById('mainHeader').className = `px-5 pt-6 pb-4 sticky top-0 z-30 shadow-md text-white transition-colors duration-500 ${config.colorClass}`;
+            document.getElementById('headerTitle').innerText = config.title;
+            document.getElementById('btn-acc-felix').className = `account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 ${accKey === 'felix' ? 'account-active' : 'account-inactive'}`;
+            document.getElementById('btn-acc-126v').className = `account-switcher flex-1 py-2 text-sm rounded-xl flex items-center justify-center gap-2 ${accKey === '126v' ? 'account-active' : 'account-inactive'}`;
+            loadData();
+        }
         function closeModal() { document.getElementById('postModal').classList.add('hidden'); }
         function switchTab(tab) {
             currentTab = tab;
@@ -326,6 +320,9 @@
             document.getElementById('tab-all').className = `flex-1 py-2 text-sm font-bold rounded-lg ${tab === 'all' ? 'bg-white ' + activeColor : 'text-white hover:bg-white/10'} shadow-sm transition-all`;
             renderList();
         }
+        function handleDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('bg-blue-50', 'border-blue-400'); }
+        function handleDrop(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('bg-blue-50', 'border-blue-400'); if (e.dataTransfer.files.length) uploadProcess(e.dataTransfer.files[0]); }
+        function handleFileSelect(e) { if (e.target.files.length) uploadProcess(e.target.files[0]); }
         function copyContent() { navigator.clipboard.writeText(document.getElementById('modalContent').innerText).then(() => Swal.fire({icon:'success', title:'Đã copy!', toast:true, position:'top', timer:1000})); }
         function downloadImageBtn() { if(currentImgUrl) window.open(currentImgUrl, '_blank'); }
         async function copyImageBtn() { if (!currentImgUrl) return; try { const res = await fetch(currentImgUrl); const blob = await res.blob(); await navigator.clipboard.write([new ClipboardItem({[blob.type]: blob})]); Swal.fire({icon:'success', title:'Copied!', toast:true, position:'top'}); } catch(e) { Swal.fire({icon:'info', title:'Nhấn giữ ảnh để copy'}); } }
